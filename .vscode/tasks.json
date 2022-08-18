@@ -10,7 +10,9 @@
                 "${file}",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
-                "--include-directory=include/"
+                "--include-directory=include/",
+                "-L${workspaceFolder}/lib"
+                "-l:libcryptopp.a"
             ],
             "options": {
                 "cwd": "${fileDirname}"

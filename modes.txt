@@ -1,0 +1,8 @@
+1. ECB
+2. CBC
+3. OFB
+4. CFB
+5. CTR
+6. XTS
+7. CCM
+8. GCM
