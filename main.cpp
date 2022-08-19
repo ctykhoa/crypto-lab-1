@@ -77,9 +77,13 @@ using CryptoPP::AES;
 
 using CryptoPP::CBC_Mode;
 using CryptoPP::CFB_Mode;
+using CryptoPP::CTR_Mode;
 using CryptoPP::ECB_Mode;
 using CryptoPP::OFB_Mode;
-using CryptoPP::CTR_Mode;
+
+#include <cryptopp/xts.h>
+using CryptoPP::XTS_Mode;
+
 using CryptoPP::SecByteBlock;
 
 // ECB
@@ -122,15 +126,23 @@ void importCTREncryptKeyFromFile(CTR_Mode<AES>::Encryption &e);
 void inputCTRDecryptKeyFromScreen(CTR_Mode<AES>::Decryption &d);
 void importCTRDecryptKeyFromFile(CTR_Mode<AES>::Decryption &d);
 
+// XTS
+void setRandomXTSEncryptKey(XTS_Mode<AES>::Encryption &e);
+void inputXTSEncryptKeyFromScreen(XTS_Mode<AES>::Encryption &e);
+void importXTSEncryptKeyFromFile(XTS_Mode<AES>::Encryption &e);
+
+void inputXTSDecryptKeyFromScreen(XTS_Mode<AES>::Decryption &d);
+void importXTSDecryptKeyFromFile(XTS_Mode<AES>::Decryption &d);
+
 int main(int argc, char *argv[])
 {
-// #ifdef __linux__
-// 	setlocale(LC_ALL, "");
-// #elif _WIN32
-// 	_setmode(_fileno(stdin), _O_U16TEXT);
-// 	_setmode(_fileno(stdout), _O_U16TEXT);
-// #else
-// #endif
+	// #ifdef __linux__
+	// 	setlocale(LC_ALL, "");
+	// #elif _WIN32
+	// 	_setmode(_fileno(stdin), _O_U16TEXT);
+	// 	_setmode(_fileno(stdout), _O_U16TEXT);
+	// #else
+	// #endif
 
 	// Read mode from screen
 	int inputMode = 0, modeIndex = 0, inputMethod = 0, plainTextInput = 0, cipherTextInput = 0, inputAction = 0;
@@ -327,6 +339,39 @@ int main(int argc, char *argv[])
 			case 3: // from file
 			{
 				importCTREncryptKeyFromFile(e);
+			}
+			break;
+			}
+
+			StringSource ss1(ws2s(wplain), true, new StreamTransformationFilter(e, new StringSink(cipher), CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::ZEROS_PADDING) // StreamTransformationFilter
+			);
+
+			// Pretty print cipher text
+			encoded = encodeText(cipher);
+
+			wcout << "cipher text: " << s2ws(encoded) << endl;
+		}
+		break;
+
+		case 6: // XTS
+		{
+			XTS_Mode<AES>::Encryption e;
+
+			switch (inputMethod) // How to input key
+			{
+			case 1: // random
+			{
+				setRandomXTSEncryptKey(e);
+			}
+			break;
+			case 2: // from screen
+			{
+				inputXTSEncryptKeyFromScreen(e);
+			}
+			break;
+			case 3: // from file
+			{
+				importXTSEncryptKeyFromFile(e);
 			}
 			break;
 			}
@@ -553,6 +598,49 @@ int main(int argc, char *argv[])
 			case 2: // from file
 			{
 				importCTRDecryptKeyFromFile(d);
+			}
+			break;
+			}
+
+			// The StreamTransformationFilter removes
+			//  padding as required.
+
+			try
+			{
+				wcout << "wcipher: " << wcipher << endl;
+
+				decoded = decodeText(ws2s(wcipher));
+
+				CryptoPP::StringSource ss4(decoded, true, new CryptoPP::StreamTransformationFilter(d, new CryptoPP::StringSink(recovered), CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::ZEROS_PADDING));
+			}
+			catch (const std::exception &e)
+			{
+				std::cerr << e.what() << '\n';
+
+				StringSource(e.what(), true, new FileSink("base64out-err.txt"));
+				system("pause");
+			}
+
+			wcout << "recovered text: " << s2ws(recovered) << endl;
+			// /* write string to file StringSource- FileSink*/
+			StringSource(recovered, true, new FileSink("base64out.txt"));
+		}
+		break;
+
+		case 6: // XTS
+		{
+			XTS_Mode<AES>::Decryption d;
+
+			switch (inputMethod) // How to input key
+			{
+			case 1: // from screen
+			{
+				inputXTSDecryptKeyFromScreen(d);
+			}
+			break;
+			case 2: // from file
+			{
+				importXTSDecryptKeyFromFile(d);
 			}
 			break;
 			}
@@ -1111,6 +1199,117 @@ void inputCTRDecryptKeyFromScreen(CTR_Mode<AES>::Decryption &d)
 }
 
 void importCTRDecryptKeyFromFile(CTR_Mode<AES>::Decryption &d)
+{
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[32];
+
+	FileSource fskey("AES_key.key", false);
+	FileSource fsiv("AES_IV.key", false);
+
+	/*Create space  for key*/
+	CryptoPP::ArraySink copykey(key, sizeof(key));
+	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
+
+	/*Copy data from AES_key.key  to  key */
+	fskey.Detach(new Redirector(copykey));
+	fsiv.Detach(new Redirector(copyiv));
+
+	fskey.Pump(sizeof(key)); // Pump first 32 bytes
+	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
+
+	wcout << "key: " << key << endl;
+	wcout << "iv: " << iv << endl;
+
+	d.SetKeyWithIV(key, sizeof(key), iv);
+}
+
+// XTS
+void setRandomXTSEncryptKey(XTS_Mode<AES>::Encryption &e)
+{
+	CryptoPP::byte key[32];
+
+	// random number generation
+	AutoSeededRandomPool prng;
+
+	// key generation
+	prng.GenerateBlock(key, sizeof(key));
+
+	byte iv[32];
+	prng.GenerateBlock(iv, sizeof(iv));
+
+	e.SetKeyWithIV(key, sizeof(key), iv);
+}
+
+void inputXTSEncryptKeyFromScreen(XTS_Mode<AES>::Encryption &e)
+{
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[32];
+
+	/* input from screen */
+	wstring winkey, winiv;
+	wcout << "please input key:" << endl;
+	std::getline(wcin, winkey);
+
+	wcout << "please input IV:" << endl;
+	std::getline(wcin, winiv);
+	/* input a string to sub bytes StringSource--ArraySink */
+
+	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+
+	wcout << "key: " << key << endl;
+
+	e.SetKeyWithIV(key, sizeof(key), iv);
+}
+
+void importXTSEncryptKeyFromFile(XTS_Mode<AES>::Encryption &e)
+{
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[32];
+
+	FileSource fskey("AES_key.key", false);
+	FileSource fsiv("AES_IV.key", false);
+
+	/*Create space  for key*/
+	CryptoPP::ArraySink copykey(key, sizeof(key));
+	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
+
+	/*Copy data from AES_key.key  to  key */
+	fskey.Detach(new Redirector(copykey));
+	fsiv.Detach(new Redirector(copyiv));
+
+	fskey.Pump(sizeof(key)); // Pump first 32 bytes
+	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
+
+	wcout << "key: " << key << endl;
+	wcout << "iv: " << iv << endl;
+
+	e.SetKeyWithIV(key, sizeof(key), iv);
+}
+
+void inputXTSDecryptKeyFromScreen(XTS_Mode<AES>::Decryption &d)
+{
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[32];
+
+	/* input from screen */
+	wstring winkey, winiv;
+	wcout << "please input key:" << endl;
+	std::getline(wcin, winkey);
+
+	wcout << "please input IV:" << endl;
+	std::getline(wcin, winiv);
+	/* input a string to sub bytes StringSource--ArraySink */
+
+	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+
+	wcout << "key: " << key << endl;
+
+	d.SetKeyWithIV(key, sizeof(key), iv);
+}
+
+void importXTSDecryptKeyFromFile(XTS_Mode<AES>::Decryption &d)
 {
 	CryptoPP::byte key[32];
 	CryptoPP::byte iv[32];
