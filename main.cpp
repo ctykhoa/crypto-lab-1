@@ -87,6 +87,9 @@ using CryptoPP::XTS_Mode;
 #include <cryptopp/ccm.h>
 using CryptoPP::CCM;
 
+#include <cryptopp/gcm.h>
+using CryptoPP::GCM;
+
 using CryptoPP::AuthenticatedDecryptionFilter;
 using CryptoPP::AuthenticatedEncryptionFilter;
 using CryptoPP::SecByteBlock;
@@ -147,6 +150,14 @@ void importCCMEncryptKeyFromFile(CCM<AES, TAG_SIZE>::Encryption &e);
 
 void inputCCMDecryptKeyFromScreen(CCM<AES, TAG_SIZE>::Decryption &d);
 void importCCMDecryptKeyFromFile(CCM<AES, TAG_SIZE>::Decryption &d);
+
+// GCM
+void setRandomGCMEncryptKey(GCM<AES>::Encryption &e);
+void inputGCMEncryptKeyFromScreen(GCM<AES>::Encryption &e);
+void importGCMEncryptKeyFromFile(GCM<AES>::Encryption &e);
+
+void inputGCMDecryptKeyFromScreen(GCM<AES>::Decryption &d);
+void importGCMDecryptKeyFromFile(GCM<AES>::Decryption &d);
 
 int main(int argc, char *argv[])
 {
@@ -428,6 +439,41 @@ int main(int argc, char *argv[])
 			e.SpecifyDataLengths(0, plain.size(), 0);
 
 			StringSource ss1(plain, true, new AuthenticatedEncryptionFilter(e, new StringSink(cipher)) // AuthenticatedEncryptionFilter
+			);
+
+			// Pretty print cipher text
+			encoded = encodeText(cipher);
+
+			wcout << "cipher text: " << s2ws(encoded) << endl;
+		}
+		break;
+
+		case 8: // GCM
+		{
+			GCM<AES>::Encryption e;
+
+			switch (inputMethod) // How to input key
+			{
+			case 1: // random
+			{
+				setRandomGCMEncryptKey(e);
+			}
+			break;
+			case 2: // from screen
+			{
+				inputGCMEncryptKeyFromScreen(e);
+			}
+			break;
+			case 3: // from file
+			{
+				importGCMEncryptKeyFromFile(e);
+			}
+			break;
+			}
+
+			plain = ws2s(wplain);
+
+			StringSource ss1(plain, true, new AuthenticatedEncryptionFilter(e, new StringSink(cipher), false, TAG_SIZE) // AuthenticatedEncryptionFilter
 			);
 
 			// Pretty print cipher text
@@ -748,6 +794,50 @@ int main(int argc, char *argv[])
 				d.SpecifyDataLengths(0, decoded.size() - TAG_SIZE, 0);
 
 				AuthenticatedDecryptionFilter df(d, new StringSink(recovered)); // AuthenticatedDecryptionFilter
+
+				StringSource ss4(decoded, true, new Redirector(df)); // StringSource
+
+				if (true == df.GetLastResult())
+				{
+					wcout << "recovered text: " << s2ws(recovered) << endl;
+				}
+
+				StringSource(recovered, true, new FileSink("base64out.txt"));
+			}
+			catch (const std::exception &e)
+			{
+				std::cerr << e.what() << '\n';
+
+				StringSource(e.what(), true, new FileSink("base64out-err.txt"));
+				system("pause");
+			}
+		}
+		break;
+		case 8: // GCM
+		{
+			GCM<AES>::Decryption d;
+
+			switch (inputMethod) // How to input key
+			{
+			case 1: // from screen
+			{
+				inputGCMDecryptKeyFromScreen(d);
+			}
+			break;
+			case 2: // from file
+			{
+				importGCMDecryptKeyFromFile(d);
+			}
+			break;
+			}
+
+			try
+			{
+				wcout << "wcipher: " << wcipher << endl;
+
+				decoded = decodeText(ws2s(wcipher));
+
+				AuthenticatedDecryptionFilter df(d, new StringSink(recovered), false, TAG_SIZE); // AuthenticatedDecryptionFilter
 
 				StringSource ss4(decoded, true, new Redirector(df)); // StringSource
 
@@ -1519,6 +1609,117 @@ void inputCCMDecryptKeyFromScreen(CCM<AES, TAG_SIZE>::Decryption &d)
 }
 
 void importCCMDecryptKeyFromFile(CCM<AES, TAG_SIZE>::Decryption &d)
+{
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	FileSource fskey("AES_key.key", false);
+	FileSource fsiv("AES_IV.key", false);
+
+	/*Create space  for key*/
+	CryptoPP::ArraySink copykey(key, sizeof(key));
+	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
+
+	/*Copy data from AES_key.key  to  key */
+	fskey.Detach(new Redirector(copykey));
+	fsiv.Detach(new Redirector(copyiv));
+
+	fskey.Pump(sizeof(key)); // Pump first 32 bytes
+	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
+
+	wcout << "key: " << key << endl;
+	wcout << "iv: " << iv << endl;
+
+	d.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
+}
+
+// GCM
+void setRandomGCMEncryptKey(GCM<AES>::Encryption &e)
+{
+	CryptoPP::byte key[32];
+
+	// random number generation
+	AutoSeededRandomPool prng;
+
+	// key generation
+	prng.GenerateBlock(key, sizeof(key));
+
+	CryptoPP::byte iv[AES::BLOCKSIZE];
+	prng.GenerateBlock(iv, sizeof(iv));
+
+	e.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
+}
+
+void inputGCMEncryptKeyFromScreen(GCM<AES>::Encryption &e)
+{
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	/* input from screen */
+	wstring winkey, winiv;
+	wcout << "please input key:" << endl;
+	std::getline(wcin, winkey);
+
+	wcout << "please input IV:" << endl;
+	std::getline(wcin, winiv);
+	/* input a string to sub bytes StringSource--ArraySink */
+
+	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+
+	wcout << "key: " << key << endl;
+
+	e.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
+}
+
+void importGCMEncryptKeyFromFile(GCM<AES>::Encryption &e)
+{
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	FileSource fskey("AES_key.key", false);
+	FileSource fsiv("AES_IV.key", false);
+
+	/*Create space  for key*/
+	CryptoPP::ArraySink copykey(key, sizeof(key));
+	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
+
+	/*Copy data from AES_key.key  to  key */
+	fskey.Detach(new Redirector(copykey));
+	fsiv.Detach(new Redirector(copyiv));
+
+	fskey.Pump(sizeof(key)); // Pump first 32 bytes
+	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
+
+	wcout << "key: " << key << endl;
+	wcout << "iv: " << iv << endl;
+
+	e.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
+}
+
+void inputGCMDecryptKeyFromScreen(GCM<AES>::Decryption &d)
+{
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	/* input from screen */
+	wstring winkey, winiv;
+	wcout << "please input key:" << endl;
+	std::getline(wcin, winkey);
+
+	wcout << "please input IV:" << endl;
+	std::getline(wcin, winiv);
+	/* input a string to sub bytes StringSource--ArraySink */
+
+	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+
+	wcout << "key: " << key << endl;
+
+	d.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
+}
+
+void importGCMDecryptKeyFromFile(GCM<AES>::Decryption &d)
 {
 	CryptoPP::byte key[32];
 	CryptoPP::byte iv[12];
