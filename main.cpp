@@ -161,13 +161,15 @@ void importGCMDecryptKeyFromFile(GCM<AES>::Decryption &d);
 
 int main(int argc, char *argv[])
 {
-	// #ifdef __linux__
-	// 	setlocale(LC_ALL, "");
-	// #elif _WIN32
-	// 	_setmode(_fileno(stdin), _O_U16TEXT);
-	// 	_setmode(_fileno(stdout), _O_U16TEXT);
-	// #else
-	// #endif
+	#ifdef __linux__
+		setlocale(LC_ALL, "");
+	#elif _WIN32
+		_setmode(_fileno(stdin), _O_U16TEXT);
+		_setmode(_fileno(stdout), _O_U16TEXT);
+	#else
+	#endif
+
+	
 
 	// Read mode from screen
 	int inputMode = 0, modeIndex = 0, inputMethod = 0, plainTextInput = 0, cipherTextInput = 0, inputAction = 0;
@@ -202,9 +204,9 @@ int main(int argc, char *argv[])
 		wcout << "Case 1: Secret key and IV are randomly chosen for each run time using random generator using CryptoPP::AutoSeededRandomPool;\n Case 2: Input Secret Key and IV from screen\n Case 3: Input Secret Key and IV from file (using file name)\n";
 		wcin >> inputMethod;
 
+		fflush(stdin);
 		wcout << "plain text: " << endl;
-		cin.ignore();
-		getline(wcin, wplain);
+		std::getline(wcin, wplain);
 
 		switch (inputMode) // Mode of operations
 		{
@@ -492,10 +494,10 @@ int main(int argc, char *argv[])
 		wcout << "Secret key,  Initialization Vector IV, and nonce,.." << endl;
 		wcout << "Case 1: Input Secret Key and IV from screen\n Case 2: Input Secret Key and IV from file (using file name)\n";
 		wcin >> inputMethod;
+		fflush(stdin);
 
 		wcout << "cipher text: " << endl;
-		cin.ignore();
-		getline(wcin, wcipher);
+		std::getline(wcin, wcipher);
 
 		switch (inputMode)
 		{
