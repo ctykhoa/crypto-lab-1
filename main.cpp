@@ -20,6 +20,7 @@ using std::codecvt_utf8;
 /* File stream*/
 #include <fstream>
 using std::ifstream;
+using std::ofstream;
 
 /* Set mode */
 #ifdef _WIN32
@@ -27,6 +28,12 @@ using std::ifstream;
 #include <fcntl.h>
 #else
 #endif
+
+#include <chrono>
+using std::chrono::duration;
+using std::chrono::duration_cast;
+using std::chrono::high_resolution_clock;
+using std::chrono::milliseconds;
 
 // external header library
 /* cryptp library */
@@ -53,15 +60,30 @@ using CryptoPP::Base64Decoder;
 using CryptoPP::Base64Encoder;
 
 // mode of operation
-#include "cryptopp/modes.h"
-// funtion definitions
-/* convert string to wstring */
-wstring s2ws(const std::string &str);
-/* convert wstring to string */
-string ws2s(const std::wstring &str);
+#include "cryptopp/des.h"
+using CryptoPP::DES;
 
-string decodeText(std::string encodedText);
-string encodeText(std::string decodedText);
+#include "cryptopp/aes.h"
+using CryptoPP::AES;
+
+#include <cryptopp/modes.h>
+using CryptoPP::CBC_Mode;
+// using CryptoPP::CFB_Mode;
+// using CryptoPP::CTR_Mode;
+// using CryptoPP::ECB_Mode;
+// using CryptoPP::OFB_Mode;
+
+#include <cryptopp/xts.h>
+using CryptoPP::XTS_Mode;
+
+#include <cryptopp/ccm.h>
+using CryptoPP::CCM;
+
+#include <cryptopp/gcm.h>
+using CryptoPP::GCM;
+
+#include "ultilities.h"
+#include "modeimplementations.h"
 
 // random number generation
 #include "cryptopp/osrng.h"
@@ -75,1689 +97,289 @@ using CryptoPP::DES;
 #include "cryptopp/aes.h"
 using CryptoPP::AES;
 
-using CryptoPP::CBC_Mode;
-using CryptoPP::CFB_Mode;
-using CryptoPP::CTR_Mode;
-using CryptoPP::ECB_Mode;
-using CryptoPP::OFB_Mode;
-
-#include <cryptopp/xts.h>
-using CryptoPP::XTS_Mode;
-
-#include <cryptopp/ccm.h>
-using CryptoPP::CCM;
-
-#include <cryptopp/gcm.h>
-using CryptoPP::GCM;
-
-using CryptoPP::AuthenticatedDecryptionFilter;
-using CryptoPP::AuthenticatedEncryptionFilter;
-using CryptoPP::SecByteBlock;
-
-// ECB
-void setRandomECBEncryptKey(ECB_Mode<AES>::Encryption &e);
-void inputECBEncryptKeyFromScreen(ECB_Mode<AES>::Encryption &e);
-void importECBEncryptKeyFromFile(ECB_Mode<AES>::Encryption &e);
-
-void inputECBDecryptKeyFromScreen(ECB_Mode<AES>::Decryption &d);
-void importECBDecryptKeyFromFile(ECB_Mode<AES>::Decryption &d);
-
-// CBC
-void setRandomCBCEncryptKey(CBC_Mode<AES>::Encryption &e);
-void inputCBCEncryptKeyFromScreen(CBC_Mode<AES>::Encryption &e);
-void importCBCEncryptKeyFromFile(CBC_Mode<AES>::Encryption &e);
-
-void inputCBCDecryptKeyFromScreen(CBC_Mode<AES>::Decryption &d);
-void importCBCDecryptKeyFromFile(CBC_Mode<AES>::Decryption &d);
-
-// OFB
-void setRandomOFBEncryptKey(OFB_Mode<AES>::Encryption &e);
-void inputOFBEncryptKeyFromScreen(OFB_Mode<AES>::Encryption &e);
-void importOFBEncryptKeyFromFile(OFB_Mode<AES>::Encryption &e);
-
-void inputOFBDecryptKeyFromScreen(OFB_Mode<AES>::Decryption &d);
-void importOFBDecryptKeyFromFile(OFB_Mode<AES>::Decryption &d);
-
-// CFB
-void setRandomCFBEncryptKey(CFB_Mode<AES>::Encryption &e);
-void inputCFBEncryptKeyFromScreen(CFB_Mode<AES>::Encryption &e);
-void importCFBEncryptKeyFromFile(CFB_Mode<AES>::Encryption &e);
-
-void inputCFBDecryptKeyFromScreen(CFB_Mode<AES>::Decryption &d);
-void importCFBDecryptKeyFromFile(CFB_Mode<AES>::Decryption &d);
-
-// CTR
-void setRandomCTREncryptKey(CTR_Mode<AES>::Encryption &e);
-void inputCTREncryptKeyFromScreen(CTR_Mode<AES>::Encryption &e);
-void importCTREncryptKeyFromFile(CTR_Mode<AES>::Encryption &e);
-
-void inputCTRDecryptKeyFromScreen(CTR_Mode<AES>::Decryption &d);
-void importCTRDecryptKeyFromFile(CTR_Mode<AES>::Decryption &d);
-
-// XTS
-void setRandomXTSEncryptKey(XTS_Mode<AES>::Encryption &e);
-void inputXTSEncryptKeyFromScreen(XTS_Mode<AES>::Encryption &e);
-void importXTSEncryptKeyFromFile(XTS_Mode<AES>::Encryption &e);
-
-void inputXTSDecryptKeyFromScreen(XTS_Mode<AES>::Decryption &d);
-void importXTSDecryptKeyFromFile(XTS_Mode<AES>::Decryption &d);
-
-// CCM
-const int TAG_SIZE = 12;
-void setRandomCCMEncryptKey(CCM<AES, TAG_SIZE>::Encryption &e);
-void inputCCMEncryptKeyFromScreen(CCM<AES, TAG_SIZE>::Encryption &e);
-void importCCMEncryptKeyFromFile(CCM<AES, TAG_SIZE>::Encryption &e);
-
-void inputCCMDecryptKeyFromScreen(CCM<AES, TAG_SIZE>::Decryption &d);
-void importCCMDecryptKeyFromFile(CCM<AES, TAG_SIZE>::Decryption &d);
-
-// GCM
-void setRandomGCMEncryptKey(GCM<AES>::Encryption &e);
-void inputGCMEncryptKeyFromScreen(GCM<AES>::Encryption &e);
-void importGCMEncryptKeyFromFile(GCM<AES>::Encryption &e);
-
-void inputGCMDecryptKeyFromScreen(GCM<AES>::Decryption &d);
-void importGCMDecryptKeyFromFile(GCM<AES>::Decryption &d);
-
 int main(int argc, char *argv[])
 {
-	#ifdef __linux__
-		setlocale(LC_ALL, "");
-	#elif _WIN32
-		_setmode(_fileno(stdin), _O_U16TEXT);
-		_setmode(_fileno(stdout), _O_U16TEXT);
-	#else
-	#endif
 
-	
+#ifdef __linux__
+	setlocale(LC_ALL, "");
+#elif _WIN32
+	_setmode(_fileno(stdin), _O_U16TEXT);
+	_setmode(_fileno(stdout), _O_U16TEXT);
+#else
+#endif
 
-	// Read mode from screen
-	int inputMode = 0, modeIndex = 0, inputMethod = 0, plainTextInput = 0, cipherTextInput = 0, inputAction = 0;
-	string selection;
-	ifstream modeSelection("modes.txt");
-	string modes[10];
+	const int KEY_LENGTH = 32;
+	const int IV_LENGTH = 16;
 
-	wcout << "Select mode of operations:" << endl;
-	while (getline(modeSelection, selection))
-	{
-		modes[modeIndex] = selection;
-		wcout << s2ws(selection) << endl;
-		modeIndex++;
-	}
-
-	wcin >> inputMode;
-	while (inputMode < 1 || inputMode > modeIndex)
-	{
-		wcout << "Invalid selection! Please select another:" << endl;
-		wcin >> inputMode;
-	}
-
-	wcout << "Encrypt/Decrypt:\n1.Encrypt\n2.Decrypt\n";
-	wcin >> inputAction;
-
+	int mode, function, inputSource, plainTextSource = 1, cipherTextSource = 1, outputDest;
+	string inKey = "", iniv, plain, cipher, output, input;
 	wstring wplain, wcipher;
-	string plain, cipher, encoded, recovered, inputKey, decoded;
+	CryptoPP::byte *key;
+	CryptoPP::byte *iv;
+	double total = 0;
 
-	if (inputAction == 1) // Encrypt
+	wcout << "Support modes: 1.ECB, 2.CBC, 3.OFB, 4.CFB, 5.CTR, 6.XTS, 7.CCM, 8.GCM\n";
+	wcin >> mode;
+	wcout << "1.Encryption or 2.Decryption:\n";
+	wcin >> function;
+	wcout << "Secret key,  Initialization Vector IV, and nonce,..\nCase 1: Secret key and IV are randomly chosen for each run time using random generator using CryptoPP::AutoSeededRandomPool;\nCase 2: Input Secret Key and IV from screen\nCase 3: Input Secret Key and IV from file (using file name)\n";
+	wcin >> inputSource;
+	if (function == 1)
 	{
-		wcout << "Secret key,  Initialization Vector IV, and nonce,.." << endl;
-		wcout << "Case 1: Secret key and IV are randomly chosen for each run time using random generator using CryptoPP::AutoSeededRandomPool;\n Case 2: Input Secret Key and IV from screen\n Case 3: Input Secret Key and IV from file (using file name)\n";
-		wcin >> inputMethod;
-
-		fflush(stdin);
-		wcout << "plain text: " << endl;
-		std::getline(wcin, wplain);
-
-		switch (inputMode) // Mode of operations
-		{
-		case 1: // ECB Mode
-		{
-			ECB_Mode<AES>::Encryption e;
-
-			switch (inputMethod) // How to input key
-			{
-			case 1: // random
-			{
-				setRandomECBEncryptKey(e);
-			}
-			break;
-			case 2: // from screen
-			{
-				inputECBEncryptKeyFromScreen(e);
-			}
-			break;
-			case 3: // from file
-			{
-				importECBEncryptKeyFromFile(e);
-			}
-			break;
-			}
-
-			StringSource ss1(ws2s(wplain), true, new StreamTransformationFilter(e, new StringSink(cipher), CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::ZEROS_PADDING) // StreamTransformationFilter  ::PKCS_PADDING
-			);
-
-			// Pretty print cipher text
-			encoded = encodeText(cipher);
-			// StringSource ss2(cipher, true,
-			// 				 new HexEncoder(
-			// 					 new StringSink(encoded)) // HexEncoder
-
-			// );
-
-			wcout << "cipher text: " << s2ws(encoded) << endl;
-		}
-		break;
-
-		case 2: // CBC
-		{
-			CBC_Mode<AES>::Encryption e;
-
-			switch (inputMethod) // How to input key
-			{
-			case 1: // random
-			{
-				setRandomCBCEncryptKey(e);
-			}
-			break;
-			case 2: // from screen
-			{
-				inputCBCEncryptKeyFromScreen(e);
-			}
-			break;
-			case 3: // from file
-			{
-				importCBCEncryptKeyFromFile(e);
-			}
-			break;
-			}
-
-			StringSource ss1(ws2s(wplain), true, new StreamTransformationFilter(e, new StringSink(cipher), CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::ZEROS_PADDING) // StreamTransformationFilter
-			);
-
-			// Pretty print cipher text
-			encoded = encodeText(cipher);
-
-			wcout << "cipher text: " << s2ws(encoded) << endl;
-		}
-		break;
-
-		case 3: // OFB
-		{
-			OFB_Mode<AES>::Encryption e;
-
-			switch (inputMethod) // How to input key
-			{
-			case 1: // random
-			{
-				setRandomOFBEncryptKey(e);
-			}
-			break;
-			case 2: // from screen
-			{
-				inputOFBEncryptKeyFromScreen(e);
-			}
-			break;
-			case 3: // from file
-			{
-				importOFBEncryptKeyFromFile(e);
-			}
-			break;
-			}
-
-			StringSource ss1(ws2s(wplain), true, new StreamTransformationFilter(e, new StringSink(cipher), CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::ZEROS_PADDING) // StreamTransformationFilter
-			);
-
-			// Pretty print cipher text
-			encoded = encodeText(cipher);
-
-			wcout << "cipher text: " << s2ws(encoded) << endl;
-		}
-		break;
-
-		case 4: // CFB
-		{
-			CFB_Mode<AES>::Encryption e;
-
-			switch (inputMethod) // How to input key
-			{
-			case 1: // random
-			{
-				setRandomCFBEncryptKey(e);
-			}
-			break;
-			case 2: // from screen
-			{
-				inputCFBEncryptKeyFromScreen(e);
-			}
-			break;
-			case 3: // from file
-			{
-				importCFBEncryptKeyFromFile(e);
-			}
-			break;
-			}
-
-			StringSource ss1(ws2s(wplain), true, new StreamTransformationFilter(e, new StringSink(cipher), CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::ZEROS_PADDING) // StreamTransformationFilter
-			);
-
-			// Pretty print cipher text
-			encoded = encodeText(cipher);
-
-			wcout << "cipher text: " << s2ws(encoded) << endl;
-		}
-		break;
-
-		case 5: // CTR
-		{
-			CTR_Mode<AES>::Encryption e;
-
-			switch (inputMethod) // How to input key
-			{
-			case 1: // random
-			{
-				setRandomCTREncryptKey(e);
-			}
-			break;
-			case 2: // from screen
-			{
-				inputCTREncryptKeyFromScreen(e);
-			}
-			break;
-			case 3: // from file
-			{
-				importCTREncryptKeyFromFile(e);
-			}
-			break;
-			}
-
-			StringSource ss1(ws2s(wplain), true, new StreamTransformationFilter(e, new StringSink(cipher), CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::ZEROS_PADDING) // StreamTransformationFilter
-			);
-
-			// Pretty print cipher text
-			encoded = encodeText(cipher);
-
-			wcout << "cipher text: " << s2ws(encoded) << endl;
-		}
-		break;
-
-		case 6: // XTS
-		{
-			XTS_Mode<AES>::Encryption e;
-
-			switch (inputMethod) // How to input key
-			{
-			case 1: // random
-			{
-				setRandomXTSEncryptKey(e);
-			}
-			break;
-			case 2: // from screen
-			{
-				inputXTSEncryptKeyFromScreen(e);
-			}
-			break;
-			case 3: // from file
-			{
-				importXTSEncryptKeyFromFile(e);
-			}
-			break;
-			}
-
-			StringSource ss1(ws2s(wplain), true, new StreamTransformationFilter(e, new StringSink(cipher), CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::ZEROS_PADDING) // StreamTransformationFilter
-			);
-
-			// Pretty print cipher text
-			encoded = encodeText(cipher);
-
-			wcout << "cipher text: " << s2ws(encoded) << endl;
-		}
-		break;
-
-		case 7: // CCM
-		{
-			CCM<AES, TAG_SIZE>::Encryption e;
-
-			switch (inputMethod) // How to input key
-			{
-			case 1: // random
-			{
-				setRandomCCMEncryptKey(e);
-			}
-			break;
-			case 2: // from screen
-			{
-				inputCCMEncryptKeyFromScreen(e);
-			}
-			break;
-			case 3: // from file
-			{
-				importCCMEncryptKeyFromFile(e);
-			}
-			break;
-			}
-
-			plain = ws2s(wplain);
-
-			e.SpecifyDataLengths(0, plain.size(), 0);
-
-			StringSource ss1(plain, true, new AuthenticatedEncryptionFilter(e, new StringSink(cipher)) // AuthenticatedEncryptionFilter
-			);
-
-			// Pretty print cipher text
-			encoded = encodeText(cipher);
-
-			wcout << "cipher text: " << s2ws(encoded) << endl;
-		}
-		break;
-
-		case 8: // GCM
-		{
-			GCM<AES>::Encryption e;
-
-			switch (inputMethod) // How to input key
-			{
-			case 1: // random
-			{
-				setRandomGCMEncryptKey(e);
-			}
-			break;
-			case 2: // from screen
-			{
-				inputGCMEncryptKeyFromScreen(e);
-			}
-			break;
-			case 3: // from file
-			{
-				importGCMEncryptKeyFromFile(e);
-			}
-			break;
-			}
-
-			plain = ws2s(wplain);
-
-			StringSource ss1(plain, true, new AuthenticatedEncryptionFilter(e, new StringSink(cipher), false, TAG_SIZE) // AuthenticatedEncryptionFilter
-			);
-
-			// Pretty print cipher text
-			encoded = encodeText(cipher);
-
-			wcout << "cipher text: " << s2ws(encoded) << endl;
-		}
-		break;
-
-		default:
-			break;
-		}
+		wcout << "Plain text: \nCase 1: Input from screen;\nCase 2: From files (using file name);\n";
+		wcin >> plainTextSource;
 	}
-	else if (inputAction == 2) // Decrypt
+	else
 	{
-		wcout << "Secret key,  Initialization Vector IV, and nonce,.." << endl;
-		wcout << "Case 1: Input Secret Key and IV from screen\n Case 2: Input Secret Key and IV from file (using file name)\n";
-		wcin >> inputMethod;
-		fflush(stdin);
+		wcout << "Ciphertext:\nCase 1: Input from screen;\nCase 2: From files (using file name);\n";
+		wcin >> cipherTextSource;
+	}
+	wcout << "Ouputs: \n1.display in screen;\n2.write to file;\n";
+	wcin >> outputDest;
 
-		wcout << "cipher text: " << endl;
-		std::getline(wcin, wcipher);
-
-		switch (inputMode)
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
 		{
-		case 1: // ECB
-		{
-			ECB_Mode<AES>::Decryption d;
-
-			switch (inputMethod) // How to input key
-			{
-			case 1: // from screen
-			{
-				inputECBDecryptKeyFromScreen(d);
-			}
-			break;
-			case 2: // from file
-			{
-				importECBDecryptKeyFromFile(d);
-			}
-			break;
-			}
-
-			// The StreamTransformationFilter removes
-			//  padding as required.
-
-			try
-			{
-				wcout << "wcipher: " << wcipher << endl;
-
-				// /* input hex string to output string*/
-				// 	string outstring;
-				// 	outstring.clear();
-				// 	StringSource(ws2s(wcipher), true, new HexDecoder(new StringSink(outstring)));
-
-				// 	StringSource ss3( outstring, true,
-				// 	new StreamTransformationFilter( d,
-				// 		new StringSink( recovered )
-				// 	) // StreamTransformationFilter
-				// ); // StringSource
-
-				decoded = decodeText(ws2s(wcipher));
-				// StringSource ss3(ws2s(wcipher), true, new HexDecoder(new StringSink(decoded)));
-
-				CryptoPP::StringSource ss4(decoded, true, new CryptoPP::StreamTransformationFilter(d, new CryptoPP::StringSink(recovered)));
-			}
-			catch (const std::exception &e)
-			{
-				std::cerr << e.what() << '\n';
-				system("pause");
-			}
-
-			wcout << "recovered text: " << s2ws(recovered) << endl;
-			// /* write string to file StringSource- FileSink*/
-			StringSource(recovered, true, new FileSink("base64out.txt"));
+			key = generateRandomByteBlock();
 		}
 		break;
-
-		case 2: // CBC
+	case 2:
+		/* screen */
 		{
-			CBC_Mode<AES>::Decryption d;
-
-			switch (inputMethod) // How to input key
+			wcout << "Input key:\n";
+			inKey = readTextFromScreen();
+			key = getByteBlockFromText(inKey);
+			if (mode != 1 /*ECB*/)
 			{
-			case 1: // from screen
-			{
-				inputCBCDecryptKeyFromScreen(d);
-			}
-			break;
-			case 2: // from file
-			{
-				importCBCDecryptKeyFromFile(d);
-			}
-			break;
-			}
-
-			// The StreamTransformationFilter removes
-			//  padding as required.
-
-			try
-			{
-				wcout << "wcipher: " << wcipher << endl;
-
-				decoded = decodeText(ws2s(wcipher));
-
-				CryptoPP::StringSource ss4(decoded, true, new CryptoPP::StreamTransformationFilter(d, new CryptoPP::StringSink(recovered), CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::ZEROS_PADDING));
-			}
-			catch (const std::exception &e)
-			{
-				std::cerr << e.what() << '\n';
-
-				StringSource(e.what(), true, new FileSink("base64out-err.txt"));
-				system("pause");
-			}
-
-			wcout << "recovered text: " << s2ws(recovered) << endl;
-			// /* write string to file StringSource- FileSink*/
-			StringSource(recovered, true, new FileSink("base64out.txt"));
-		}
-		break;
-
-		case 3: // OFB
-		{
-			OFB_Mode<AES>::Decryption d;
-
-			switch (inputMethod) // How to input key
-			{
-			case 1: // from screen
-			{
-				inputOFBDecryptKeyFromScreen(d);
-			}
-			break;
-			case 2: // from file
-			{
-				importOFBDecryptKeyFromFile(d);
-			}
-			break;
-			}
-
-			// The StreamTransformationFilter removes
-			//  padding as required.
-
-			try
-			{
-				wcout << "wcipher: " << wcipher << endl;
-
-				decoded = decodeText(ws2s(wcipher));
-
-				CryptoPP::StringSource ss4(decoded, true, new CryptoPP::StreamTransformationFilter(d, new CryptoPP::StringSink(recovered), CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::ZEROS_PADDING));
-			}
-			catch (const std::exception &e)
-			{
-				std::cerr << e.what() << '\n';
-
-				StringSource(e.what(), true, new FileSink("base64out-err.txt"));
-				system("pause");
-			}
-
-			wcout << "recovered text: " << s2ws(recovered) << endl;
-			// /* write string to file StringSource- FileSink*/
-			StringSource(recovered, true, new FileSink("base64out.txt"));
-		}
-		break;
-
-		case 4: // CFB
-		{
-			CFB_Mode<AES>::Decryption d;
-
-			switch (inputMethod) // How to input key
-			{
-			case 1: // from screen
-			{
-				inputCFBDecryptKeyFromScreen(d);
-			}
-			break;
-			case 2: // from file
-			{
-				importCFBDecryptKeyFromFile(d);
-			}
-			break;
-			}
-
-			// The StreamTransformationFilter removes
-			//  padding as required.
-
-			try
-			{
-				wcout << "wcipher: " << wcipher << endl;
-
-				decoded = decodeText(ws2s(wcipher));
-
-				CryptoPP::StringSource ss4(decoded, true, new CryptoPP::StreamTransformationFilter(d, new CryptoPP::StringSink(recovered), CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::ZEROS_PADDING));
-			}
-			catch (const std::exception &e)
-			{
-				std::cerr << e.what() << '\n';
-
-				StringSource(e.what(), true, new FileSink("base64out-err.txt"));
-				system("pause");
-			}
-
-			wcout << "recovered text: " << s2ws(recovered) << endl;
-			// /* write string to file StringSource- FileSink*/
-			StringSource(recovered, true, new FileSink("base64out.txt"));
-		}
-		break;
-
-		case 5: // CTR
-		{
-			CTR_Mode<AES>::Decryption d;
-
-			switch (inputMethod) // How to input key
-			{
-			case 1: // from screen
-			{
-				inputCTRDecryptKeyFromScreen(d);
-			}
-			break;
-			case 2: // from file
-			{
-				importCTRDecryptKeyFromFile(d);
-			}
-			break;
-			}
-
-			// The StreamTransformationFilter removes
-			//  padding as required.
-
-			try
-			{
-				wcout << "wcipher: " << wcipher << endl;
-
-				decoded = decodeText(ws2s(wcipher));
-
-				CryptoPP::StringSource ss4(decoded, true, new CryptoPP::StreamTransformationFilter(d, new CryptoPP::StringSink(recovered), CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::ZEROS_PADDING));
-			}
-			catch (const std::exception &e)
-			{
-				std::cerr << e.what() << '\n';
-
-				StringSource(e.what(), true, new FileSink("base64out-err.txt"));
-				system("pause");
-			}
-
-			wcout << "recovered text: " << s2ws(recovered) << endl;
-			// /* write string to file StringSource- FileSink*/
-			StringSource(recovered, true, new FileSink("base64out.txt"));
-		}
-		break;
-
-		case 6: // XTS
-		{
-			XTS_Mode<AES>::Decryption d;
-
-			switch (inputMethod) // How to input key
-			{
-			case 1: // from screen
-			{
-				inputXTSDecryptKeyFromScreen(d);
-			}
-			break;
-			case 2: // from file
-			{
-				importXTSDecryptKeyFromFile(d);
-			}
-			break;
-			}
-
-			// The StreamTransformationFilter removes
-			//  padding as required.
-
-			try
-			{
-				wcout << "wcipher: " << wcipher << endl;
-
-				decoded = decodeText(ws2s(wcipher));
-
-				CryptoPP::StringSource ss4(decoded, true, new CryptoPP::StreamTransformationFilter(d, new CryptoPP::StringSink(recovered), CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::ZEROS_PADDING));
-			}
-			catch (const std::exception &e)
-			{
-				std::cerr << e.what() << '\n';
-
-				StringSource(e.what(), true, new FileSink("base64out-err.txt"));
-				system("pause");
-			}
-
-			wcout << "recovered text: " << s2ws(recovered) << endl;
-			// /* write string to file StringSource- FileSink*/
-			StringSource(recovered, true, new FileSink("base64out.txt"));
-		}
-		break;
-
-		case 7: // CCM
-		{
-			CCM<AES, TAG_SIZE>::Decryption d;
-
-			switch (inputMethod) // How to input key
-			{
-			case 1: // from screen
-			{
-				inputCCMDecryptKeyFromScreen(d);
-			}
-			break;
-			case 2: // from file
-			{
-				importCCMDecryptKeyFromFile(d);
-			}
-			break;
-			}
-
-			try
-			{
-				wcout << "wcipher: " << wcipher << endl;
-
-				decoded = decodeText(ws2s(wcipher));
-
-				d.SpecifyDataLengths(0, decoded.size() - TAG_SIZE, 0);
-
-				AuthenticatedDecryptionFilter df(d, new StringSink(recovered)); // AuthenticatedDecryptionFilter
-
-				StringSource ss4(decoded, true, new Redirector(df)); // StringSource
-
-				if (true == df.GetLastResult())
-				{
-					wcout << "recovered text: " << s2ws(recovered) << endl;
-				}
-
-				StringSource(recovered, true, new FileSink("base64out.txt"));
-			}
-			catch (const std::exception &e)
-			{
-				std::cerr << e.what() << '\n';
-
-				StringSource(e.what(), true, new FileSink("base64out-err.txt"));
-				system("pause");
+				wcout << "Input IV:\n";
+				iniv = readTextFromScreen();
+				iv = getByteBlockFromText(iniv);
 			}
 		}
 		break;
-		case 8: // GCM
+	case 3:
+		/* file */
 		{
-			GCM<AES>::Decryption d;
-
-			switch (inputMethod) // How to input key
+			inKey = readTextFromFile((char *)"AES_key.key");
+			key = getByteBlockFromText(inKey);
+			if (mode != 1 /*ECB*/)
 			{
-			case 1: // from screen
-			{
-				inputGCMDecryptKeyFromScreen(d);
-			}
-			break;
-			case 2: // from file
-			{
-				importGCMDecryptKeyFromFile(d);
-			}
-			break;
-			}
-
-			try
-			{
-				wcout << "wcipher: " << wcipher << endl;
-
-				decoded = decodeText(ws2s(wcipher));
-
-				AuthenticatedDecryptionFilter df(d, new StringSink(recovered), false, TAG_SIZE); // AuthenticatedDecryptionFilter
-
-				StringSource ss4(decoded, true, new Redirector(df)); // StringSource
-
-				if (true == df.GetLastResult())
-				{
-					wcout << "recovered text: " << s2ws(recovered) << endl;
-				}
-
-				StringSource(recovered, true, new FileSink("base64out.txt"));
-			}
-			catch (const std::exception &e)
-			{
-				std::cerr << e.what() << '\n';
-
-				StringSource(e.what(), true, new FileSink("base64out-err.txt"));
-				system("pause");
+				iniv = readTextFromFile((char *)"AES_IV.key");
+				iv = getByteBlockFromText(iniv);
 			}
 		}
 		break;
-
-		default:
-			break;
-		}
+	default:
+		break;
 	}
 
+	switch (function)
+	{
+	case 1:
+		/* Encrypt */
+		{
+			switch (plainTextSource)
+			{
+			case 1:
+				/* screen */
+				{
+					wcout << "Input plain text:\n";
+					plain = readTextFromScreen();
+				}
+				break;
+			case 2:
+				/* file */
+				{
+					plain = readTextFromFile((char *)"plaintext_input.txt");
+				}
+				break;
+			default:
+				break;
+			}
+		}
+		break;
+	case 2:
+		/* Decrypt */
+		{
+			switch (cipherTextSource)
+			{
+			case 1:
+				/* screen */
+				{
+					wcout << "Input cipher text:\n";
+					cipher = readTextFromScreen();
+				}
+				break;
+			case 2:
+				/* file */
+				{
+					cipher = readTextFromFile((char *)"ciphertext_input.txt");
+				}
+				break;
+			default:
+				break;
+			}
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	// Validate user input option:
+	if ((mode < 1 || mode > 8) || (function != 1 && function != 2) || (inputSource < 1 || inputSource > 3) || (cipherTextSource < 1 || cipherTextSource > 2) || (outputDest != 1 && outputDest != 2))
+	{
+		wcout << "Invalid option!" << endl;
+		system("pause");
+		return 0;
+	}
+
+	switch (mode)
+	{
+	case 1:
+		/* ECB */
+		{
+			if (function == 1)
+			{
+				// Encrypt
+				int i = 1;
+				input = plain;
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + encryptECB(plain, key);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				ECB_Mode<AES>::Encryption e;
+				e.SetKey(key, KEY_LENGTH);
+
+				// Execute
+				StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
+				output = encodeText(cipher);
+			}
+			else
+			{
+				// Decrypt
+				int i = 1;
+				string decodedCipher;
+				input = cipher;
+				decodedCipher = decodeText(cipher);
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + decryptECB(decodedCipher, key);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				ECB_Mode<AES>::Decryption d;
+				d.SetKey(key, KEY_LENGTH);
+
+				// Execute
+				StringSource ss3(decodedCipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
+				output = plain;
+			}
+		}
+		break;
+	case 2:
+		/* CBC */
+		{
+			if (function == 1)
+			{
+				// Encrypt
+				int i = 1;
+				input = plain;
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + encryptCBC(plain, key, iv);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				CBC_Mode<AES>::Encryption e;
+				e.SetKeyWithIV(key, KEY_LENGTH, iv);
+
+				// Execute
+				StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
+				output = encodeText(cipher);
+			}
+			else
+			{
+				// Decrypt
+				int i = 1;
+				string decodedCipher;
+				input = cipher;
+				decodedCipher = decodeText(cipher);
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + decryptCBC(decodedCipher, key, iv);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				CBC_Mode<AES>::Decryption d;
+				d.SetKeyWithIV(key, KEY_LENGTH, iv);
+
+				// Execute
+				StringSource ss3(decodedCipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
+				output = plain;
+			}
+		}
+		break;
+	default:
+		break;
+	}
+
+	// Print hash output in hex form
+	switch (outputDest)
+	{
+	case 1:
+		/* screen */
+		{
+			displayToScreen(output);
+		}
+		break;
+	case 2:
+		/* file */
+		{
+			writeToFile(output, (char *)"output.txt");
+		}
+		break;
+	default:
+		break;
+	}
+	wcout << "Input size: " << input.size() << " bytes" << endl;
+	wcout << "Total time for 10000 rounds: " << total << " ms" << endl;
+	wcout << "Execution time: " << total / 10000 << " ms" << endl;
 	system("pause");
-}
-
-/* convert string to wstring */
-wstring s2ws(const std::string &str)
-{
-	wstring_convert<codecvt_utf8<wchar_t>> towstring;
-	return towstring.from_bytes(str);
-}
-
-/* convert wstring to string */
-string ws2s(const std::wstring &str)
-{
-	wstring_convert<codecvt_utf8<wchar_t>> tostring;
-	return tostring.to_bytes(str);
-}
-
-// ECB
-void setRandomECBEncryptKey(ECB_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-
-	// random number generation
-	AutoSeededRandomPool prng;
-
-	// key generation
-	prng.GenerateBlock(key, sizeof(key));
-
-	e.SetKey(key, sizeof(key));
-}
-
-void inputECBEncryptKeyFromScreen(ECB_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-
-	/* input from screen */
-	wstring winkey;
-	string inkey;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-	/* input a string to sub bytes StringSource--ArraySink */
-	// ouput 8 bytes
-	// convert wstring to string
-	inkey = ws2s(winkey);
-	StringSource(inkey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-
-	wcout << "key: " << key << endl;
-
-	e.SetKey(key, sizeof(key));
-}
-
-void importECBEncryptKeyFromFile(ECB_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-
-	FileSource fs("AES_key.key", false);
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	/*Copy data from AES_key.key  to  key */
-	fs.Detach(new Redirector(copykey));
-	fs.Pump(sizeof(key)); // Pump first 32 bytes
-	wcout << "key: " << key << endl;
-
-	e.SetKey(key, sizeof(key));
-}
-
-void inputECBDecryptKeyFromScreen(ECB_Mode<AES>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-
-	/* input from screen */
-	wstring winkey;
-	string inkey;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-	/* input a string to sub bytes StringSource--ArraySink */
-	// ouput 8 bytes
-	// convert wstring to string
-	inkey = ws2s(winkey);
-	StringSource(inkey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	wcout << "key: " << key << endl;
-
-	d.SetKey(key, sizeof(key));
-}
-void importECBDecryptKeyFromFile(ECB_Mode<AES>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-
-	FileSource fs("AES_key.key", false);
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	/*Copy data from AES_key.key  to  key */
-	fs.Detach(new Redirector(copykey));
-	fs.Pump(sizeof(key)); // Pump first 32 bytes
-	wcout << "key: " << key << endl;
-
-	d.SetKey(key, sizeof(key));
-}
-
-// CBC
-void setRandomCBCEncryptKey(CBC_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-
-	// random number generation
-	AutoSeededRandomPool prng;
-
-	// key generation
-	prng.GenerateBlock(key, sizeof(key));
-
-	byte iv[32];
-	prng.GenerateBlock(iv, sizeof(iv));
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-void inputCBCEncryptKeyFromScreen(CBC_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	/* input from screen */
-	wstring winkey, winiv;
-	string inkey, iniv;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-
-	wcout << "please input IV:" << endl;
-	std::getline(wcin, winiv);
-	/* input a string to sub bytes StringSource--ArraySink */
-	// ouput 8 bytes
-	// convert wstring to string
-	inkey = ws2s(winkey);
-
-	StringSource(inkey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
-
-	wcout << "key: " << key << endl;
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-void importCBCEncryptKeyFromFile(CBC_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	FileSource fskey("AES_key.key", false);
-	FileSource fsiv("AES_IV.key", false);
-
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
-
-	/*Copy data from AES_key.key  to  key */
-	fskey.Detach(new Redirector(copykey));
-	fsiv.Detach(new Redirector(copyiv));
-
-	fskey.Pump(sizeof(key)); // Pump first 32 bytes
-	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
-
-	wcout << "key: " << key << endl;
-	wcout << "iv: " << iv << endl;
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void inputCBCDecryptKeyFromScreen(CBC_Mode<AES>::Decryption &d)
-{
-
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	/* input from screen */
-	wstring winkey, winiv;
-	string inkey, iniv;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-
-	wcout << "please input IV:" << endl;
-	std::getline(wcin, winiv);
-	/* input a string to sub bytes StringSource--ArraySink */
-	// ouput 8 bytes
-	// convert wstring to string
-	inkey = ws2s(winkey);
-	StringSource(inkey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
-
-	wcout << "key: " << key << endl;
-
-	d.SetKeyWithIV(key, sizeof(key), iv);
-}
-void importCBCDecryptKeyFromFile(CBC_Mode<AES>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	FileSource fskey("AES_key.key", false);
-	FileSource fsiv("AES_IV.key", false);
-
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
-
-	/*Copy data from AES_key.key  to  key */
-	fskey.Detach(new Redirector(copykey));
-	fsiv.Detach(new Redirector(copyiv));
-
-	fskey.Pump(sizeof(key)); // Pump first 32 bytes
-	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
-
-	wcout << "key: " << key << endl;
-	wcout << "iv: " << iv << endl;
-
-	d.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-// OFB
-void setRandomOFBEncryptKey(OFB_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-
-	// random number generation
-	AutoSeededRandomPool prng;
-
-	// key generation
-	prng.GenerateBlock(key, sizeof(key));
-
-	byte iv[32];
-	prng.GenerateBlock(iv, sizeof(iv));
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void inputOFBEncryptKeyFromScreen(OFB_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	/* input from screen */
-	wstring winkey, winiv;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-
-	wcout << "please input IV:" << endl;
-	std::getline(wcin, winiv);
-	/* input a string to sub bytes StringSource--ArraySink */
-
-	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
-
-	wcout << "key: " << key << endl;
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void importOFBEncryptKeyFromFile(OFB_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	FileSource fskey("AES_key.key", false);
-	FileSource fsiv("AES_IV.key", false);
-
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
-
-	/*Copy data from AES_key.key  to  key */
-	fskey.Detach(new Redirector(copykey));
-	fsiv.Detach(new Redirector(copyiv));
-
-	fskey.Pump(sizeof(key)); // Pump first 32 bytes
-	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
-
-	wcout << "key: " << key << endl;
-	wcout << "iv: " << iv << endl;
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void inputOFBDecryptKeyFromScreen(OFB_Mode<AES>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	/* input from screen */
-	wstring winkey, winiv;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-
-	wcout << "please input IV:" << endl;
-	std::getline(wcin, winiv);
-	/* input a string to sub bytes StringSource--ArraySink */
-
-	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
-
-	wcout << "key: " << key << endl;
-
-	d.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void importOFBDecryptKeyFromFile(OFB_Mode<AES>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	FileSource fskey("AES_key.key", false);
-	FileSource fsiv("AES_IV.key", false);
-
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
-
-	/*Copy data from AES_key.key  to  key */
-	fskey.Detach(new Redirector(copykey));
-	fsiv.Detach(new Redirector(copyiv));
-
-	fskey.Pump(sizeof(key)); // Pump first 32 bytes
-	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
-
-	wcout << "key: " << key << endl;
-	wcout << "iv: " << iv << endl;
-
-	d.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-// CFB
-void setRandomCFBEncryptKey(CFB_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-
-	// random number generation
-	AutoSeededRandomPool prng;
-
-	// key generation
-	prng.GenerateBlock(key, sizeof(key));
-
-	byte iv[32];
-	prng.GenerateBlock(iv, sizeof(iv));
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void inputCFBEncryptKeyFromScreen(CFB_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	/* input from screen */
-	wstring winkey, winiv;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-
-	wcout << "please input IV:" << endl;
-	std::getline(wcin, winiv);
-	/* input a string to sub bytes StringSource--ArraySink */
-
-	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
-
-	wcout << "key: " << key << endl;
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void importCFBEncryptKeyFromFile(CFB_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	FileSource fskey("AES_key.key", false);
-	FileSource fsiv("AES_IV.key", false);
-
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
-
-	/*Copy data from AES_key.key  to  key */
-	fskey.Detach(new Redirector(copykey));
-	fsiv.Detach(new Redirector(copyiv));
-
-	fskey.Pump(sizeof(key)); // Pump first 32 bytes
-	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
-
-	wcout << "key: " << key << endl;
-	wcout << "iv: " << iv << endl;
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void inputCFBDecryptKeyFromScreen(CFB_Mode<AES>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	/* input from screen */
-	wstring winkey, winiv;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-
-	wcout << "please input IV:" << endl;
-	std::getline(wcin, winiv);
-	/* input a string to sub bytes StringSource--ArraySink */
-
-	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
-
-	wcout << "key: " << key << endl;
-
-	d.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void importCFBDecryptKeyFromFile(CFB_Mode<AES>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	FileSource fskey("AES_key.key", false);
-	FileSource fsiv("AES_IV.key", false);
-
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
-
-	/*Copy data from AES_key.key  to  key */
-	fskey.Detach(new Redirector(copykey));
-	fsiv.Detach(new Redirector(copyiv));
-
-	fskey.Pump(sizeof(key)); // Pump first 32 bytes
-	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
-
-	wcout << "key: " << key << endl;
-	wcout << "iv: " << iv << endl;
-
-	d.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-// CTR
-void setRandomCTREncryptKey(CTR_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-
-	// random number generation
-	AutoSeededRandomPool prng;
-
-	// key generation
-	prng.GenerateBlock(key, sizeof(key));
-
-	byte iv[32];
-	prng.GenerateBlock(iv, sizeof(iv));
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void inputCTREncryptKeyFromScreen(CTR_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	/* input from screen */
-	wstring winkey, winiv;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-
-	wcout << "please input IV:" << endl;
-	std::getline(wcin, winiv);
-	/* input a string to sub bytes StringSource--ArraySink */
-
-	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
-
-	wcout << "key: " << key << endl;
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void importCTREncryptKeyFromFile(CTR_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	FileSource fskey("AES_key.key", false);
-	FileSource fsiv("AES_IV.key", false);
-
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
-
-	/*Copy data from AES_key.key  to  key */
-	fskey.Detach(new Redirector(copykey));
-	fsiv.Detach(new Redirector(copyiv));
-
-	fskey.Pump(sizeof(key)); // Pump first 32 bytes
-	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
-
-	wcout << "key: " << key << endl;
-	wcout << "iv: " << iv << endl;
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void inputCTRDecryptKeyFromScreen(CTR_Mode<AES>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	/* input from screen */
-	wstring winkey, winiv;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-
-	wcout << "please input IV:" << endl;
-	std::getline(wcin, winiv);
-	/* input a string to sub bytes StringSource--ArraySink */
-
-	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
-
-	wcout << "key: " << key << endl;
-
-	d.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void importCTRDecryptKeyFromFile(CTR_Mode<AES>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	FileSource fskey("AES_key.key", false);
-	FileSource fsiv("AES_IV.key", false);
-
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
-
-	/*Copy data from AES_key.key  to  key */
-	fskey.Detach(new Redirector(copykey));
-	fsiv.Detach(new Redirector(copyiv));
-
-	fskey.Pump(sizeof(key)); // Pump first 32 bytes
-	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
-
-	wcout << "key: " << key << endl;
-	wcout << "iv: " << iv << endl;
-
-	d.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-// XTS
-void setRandomXTSEncryptKey(XTS_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-
-	// random number generation
-	AutoSeededRandomPool prng;
-
-	// key generation
-	prng.GenerateBlock(key, sizeof(key));
-
-	byte iv[32];
-	prng.GenerateBlock(iv, sizeof(iv));
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void inputXTSEncryptKeyFromScreen(XTS_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	/* input from screen */
-	wstring winkey, winiv;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-
-	wcout << "please input IV:" << endl;
-	std::getline(wcin, winiv);
-	/* input a string to sub bytes StringSource--ArraySink */
-
-	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
-
-	wcout << "key: " << key << endl;
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void importXTSEncryptKeyFromFile(XTS_Mode<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	FileSource fskey("AES_key.key", false);
-	FileSource fsiv("AES_IV.key", false);
-
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
-
-	/*Copy data from AES_key.key  to  key */
-	fskey.Detach(new Redirector(copykey));
-	fsiv.Detach(new Redirector(copyiv));
-
-	fskey.Pump(sizeof(key)); // Pump first 32 bytes
-	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
-
-	wcout << "key: " << key << endl;
-	wcout << "iv: " << iv << endl;
-
-	e.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void inputXTSDecryptKeyFromScreen(XTS_Mode<AES>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	/* input from screen */
-	wstring winkey, winiv;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-
-	wcout << "please input IV:" << endl;
-	std::getline(wcin, winiv);
-	/* input a string to sub bytes StringSource--ArraySink */
-
-	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
-
-	wcout << "key: " << key << endl;
-
-	d.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-void importXTSDecryptKeyFromFile(XTS_Mode<AES>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[32];
-
-	FileSource fskey("AES_key.key", false);
-	FileSource fsiv("AES_IV.key", false);
-
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
-
-	/*Copy data from AES_key.key  to  key */
-	fskey.Detach(new Redirector(copykey));
-	fsiv.Detach(new Redirector(copyiv));
-
-	fskey.Pump(sizeof(key)); // Pump first 32 bytes
-	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
-
-	wcout << "key: " << key << endl;
-	wcout << "iv: " << iv << endl;
-
-	d.SetKeyWithIV(key, sizeof(key), iv);
-}
-
-// CCM
-void setRandomCCMEncryptKey(CCM<AES, TAG_SIZE>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-
-	// random number generation
-	AutoSeededRandomPool prng;
-
-	// key generation
-	prng.GenerateBlock(key, sizeof(key));
-
-	byte iv[12];
-	prng.GenerateBlock(iv, sizeof(iv));
-
-	e.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
-}
-
-void inputCCMEncryptKeyFromScreen(CCM<AES, TAG_SIZE>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[12];
-
-	/* input from screen */
-	wstring winkey, winiv;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-
-	wcout << "please input IV:" << endl;
-	std::getline(wcin, winiv);
-	/* input a string to sub bytes StringSource--ArraySink */
-
-	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
-
-	wcout << "key: " << key << endl;
-
-	e.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
-}
-
-void importCCMEncryptKeyFromFile(CCM<AES, TAG_SIZE>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[12];
-
-	FileSource fskey("AES_key.key", false);
-	FileSource fsiv("AES_IV.key", false);
-
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
-
-	/*Copy data from AES_key.key  to  key */
-	fskey.Detach(new Redirector(copykey));
-	fsiv.Detach(new Redirector(copyiv));
-
-	fskey.Pump(sizeof(key)); // Pump first 32 bytes
-	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
-
-	wcout << "key: " << key << endl;
-	wcout << "iv: " << iv << endl;
-
-	e.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
-}
-
-void inputCCMDecryptKeyFromScreen(CCM<AES, TAG_SIZE>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[12];
-
-	/* input from screen */
-	wstring winkey, winiv;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-
-	wcout << "please input IV:" << endl;
-	std::getline(wcin, winiv);
-	/* input a string to sub bytes StringSource--ArraySink */
-
-	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
-
-	wcout << "key: " << key << endl;
-
-	d.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
-}
-
-void importCCMDecryptKeyFromFile(CCM<AES, TAG_SIZE>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[12];
-
-	FileSource fskey("AES_key.key", false);
-	FileSource fsiv("AES_IV.key", false);
-
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
-
-	/*Copy data from AES_key.key  to  key */
-	fskey.Detach(new Redirector(copykey));
-	fsiv.Detach(new Redirector(copyiv));
-
-	fskey.Pump(sizeof(key)); // Pump first 32 bytes
-	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
-
-	wcout << "key: " << key << endl;
-	wcout << "iv: " << iv << endl;
-
-	d.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
-}
-
-// GCM
-void setRandomGCMEncryptKey(GCM<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-
-	// random number generation
-	AutoSeededRandomPool prng;
-
-	// key generation
-	prng.GenerateBlock(key, sizeof(key));
-
-	CryptoPP::byte iv[AES::BLOCKSIZE];
-	prng.GenerateBlock(iv, sizeof(iv));
-
-	e.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
-}
-
-void inputGCMEncryptKeyFromScreen(GCM<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[12];
-
-	/* input from screen */
-	wstring winkey, winiv;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-
-	wcout << "please input IV:" << endl;
-	std::getline(wcin, winiv);
-	/* input a string to sub bytes StringSource--ArraySink */
-
-	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
-
-	wcout << "key: " << key << endl;
-
-	e.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
-}
-
-void importGCMEncryptKeyFromFile(GCM<AES>::Encryption &e)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[12];
-
-	FileSource fskey("AES_key.key", false);
-	FileSource fsiv("AES_IV.key", false);
-
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
-
-	/*Copy data from AES_key.key  to  key */
-	fskey.Detach(new Redirector(copykey));
-	fsiv.Detach(new Redirector(copyiv));
-
-	fskey.Pump(sizeof(key)); // Pump first 32 bytes
-	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
-
-	wcout << "key: " << key << endl;
-	wcout << "iv: " << iv << endl;
-
-	e.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
-}
-
-void inputGCMDecryptKeyFromScreen(GCM<AES>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[12];
-
-	/* input from screen */
-	wstring winkey, winiv;
-	wcout << "please input key:" << endl;
-	std::getline(wcin, winkey);
-
-	wcout << "please input IV:" << endl;
-	std::getline(wcin, winiv);
-	/* input a string to sub bytes StringSource--ArraySink */
-
-	StringSource(ws2s(winkey), true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
-	StringSource(ws2s(winiv), true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
-
-	wcout << "key: " << key << endl;
-
-	d.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
-}
-
-void importGCMDecryptKeyFromFile(GCM<AES>::Decryption &d)
-{
-	CryptoPP::byte key[32];
-	CryptoPP::byte iv[12];
-
-	FileSource fskey("AES_key.key", false);
-	FileSource fsiv("AES_IV.key", false);
-
-	/*Create space  for key*/
-	CryptoPP::ArraySink copykey(key, sizeof(key));
-	CryptoPP::ArraySink copyiv(iv, sizeof(iv));
-
-	/*Copy data from AES_key.key  to  key */
-	fskey.Detach(new Redirector(copykey));
-	fsiv.Detach(new Redirector(copyiv));
-
-	fskey.Pump(sizeof(key)); // Pump first 32 bytes
-	fsiv.Pump(sizeof(iv));	 // Pump first 32 bytes
-
-	wcout << "key: " << key << endl;
-	wcout << "iv: " << iv << endl;
-
-	d.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
-}
-
-string decodeText(std::string encodedText)
-{
-	string decoded;
-	StringSource ss(encodedText, true, new HexDecoder(new StringSink(decoded)));
-
-	return decoded;
-}
-
-string encodeText(std::string decodedText)
-{
-	string encoded;
-	StringSource ss(decodedText, true, new HexEncoder(new StringSink(encoded)));
-
-	return encoded;
 }

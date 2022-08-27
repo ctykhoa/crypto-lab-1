@@ -8,10 +8,14 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
+                "${fileDirname}\\ultilities.cpp",
+                "${fileDirname}\\ultilities.h",
+                "${fileDirname}\\modeimplementations.cpp",
+                "${fileDirname}\\modeimplementations.h",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
                 "--include-directory=include/",
-                "-L${workspaceFolder}/lib"
+                "-L${workspaceFolder}/lib",
                 "-l:libcryptopp.a"
             ],
             "options": {
