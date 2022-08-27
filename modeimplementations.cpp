@@ -79,6 +79,20 @@ using CryptoPP::AES;
 #include "ultilities.h"
 #include "modeimplementations.h"
 
+#include <cryptopp/xts.h>
+using CryptoPP::XTS_Mode;
+
+#include <cryptopp/ccm.h>
+using CryptoPP::AuthenticatedDecryptionFilter;
+using CryptoPP::AuthenticatedEncryptionFilter;
+using CryptoPP::CCM;
+using CryptoPP::Redirector;
+
+#include <cryptopp/gcm.h>
+using CryptoPP::GCM;
+
+using CryptoPP::CCM_Base;
+
 double encryptECB(string plain, CryptoPP::byte *key)
 {
 	double etime;
@@ -149,6 +163,255 @@ double decryptCBC(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
 	// Execute
 
 	StringSource ss3(cipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
+
+	auto stop_s = high_resolution_clock::now();
+	/* Getting number of milliseconds as a double. */
+	duration<double, std::milli> etime_s = (stop_s - start_s);
+	etime = etime_s.count();
+
+	return etime;
+}
+
+// OFB
+double encryptOFB(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
+{
+	double etime;
+	string cipher;
+
+	OFB_Mode<AES>::Encryption e;
+	e.SetKeyWithIV(key, 32, iv);
+
+	auto start_s = high_resolution_clock::now();
+	// Execute
+	StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
+
+	auto stop_s = high_resolution_clock::now();
+	/* Getting number of milliseconds as a double. */
+	duration<double, std::milli> etime_s = (stop_s - start_s);
+	etime = etime_s.count();
+
+	return etime;
+}
+double decryptOFB(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
+{
+	double etime;
+	string plain;
+
+	OFB_Mode<AES>::Decryption d;
+	d.SetKeyWithIV(key, 32, iv);
+	auto start_s = high_resolution_clock::now();
+	// Execute
+
+	StringSource ss3(cipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
+
+	auto stop_s = high_resolution_clock::now();
+	/* Getting number of milliseconds as a double. */
+	duration<double, std::milli> etime_s = (stop_s - start_s);
+	etime = etime_s.count();
+
+	return etime;
+}
+
+// CFB
+double encryptCFB(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
+{
+	double etime;
+	string cipher;
+
+	CFB_Mode<AES>::Encryption e;
+	e.SetKeyWithIV(key, 32, iv);
+
+	auto start_s = high_resolution_clock::now();
+	// Execute
+	StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
+
+	auto stop_s = high_resolution_clock::now();
+	/* Getting number of milliseconds as a double. */
+	duration<double, std::milli> etime_s = (stop_s - start_s);
+	etime = etime_s.count();
+
+	return etime;
+}
+double decryptCFB(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
+{
+	double etime;
+	string plain;
+
+	CFB_Mode<AES>::Decryption d;
+	d.SetKeyWithIV(key, 32, iv);
+	auto start_s = high_resolution_clock::now();
+	// Execute
+
+	StringSource ss3(cipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
+
+	auto stop_s = high_resolution_clock::now();
+	/* Getting number of milliseconds as a double. */
+	duration<double, std::milli> etime_s = (stop_s - start_s);
+	etime = etime_s.count();
+
+	return etime;
+}
+
+// CTR
+double encryptCTR(string plain, CryptoPP::byte *key, CryptoPP::byte *ctr)
+{
+	double etime;
+	string cipher;
+
+	CTR_Mode<AES>::Encryption e;
+	e.SetKeyWithIV(key, 32, ctr);
+
+	auto start_s = high_resolution_clock::now();
+	// Execute
+	StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
+
+	auto stop_s = high_resolution_clock::now();
+	/* Getting number of milliseconds as a double. */
+	duration<double, std::milli> etime_s = (stop_s - start_s);
+	etime = etime_s.count();
+
+	return etime;
+}
+double decryptCTR(string cipher, CryptoPP::byte *key, CryptoPP::byte *ctr)
+{
+	double etime;
+	string plain;
+
+	CTR_Mode<AES>::Decryption d;
+	d.SetKeyWithIV(key, 32, ctr);
+	auto start_s = high_resolution_clock::now();
+	// Execute
+
+	StringSource ss3(cipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
+
+	auto stop_s = high_resolution_clock::now();
+	/* Getting number of milliseconds as a double. */
+	duration<double, std::milli> etime_s = (stop_s - start_s);
+	etime = etime_s.count();
+
+	return etime;
+}
+
+// XTS
+double encryptXTS(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
+{
+	double etime;
+	string cipher;
+
+	XTS_Mode<AES>::Encryption e;
+	e.SetKeyWithIV(key, 32, iv);
+
+	auto start_s = high_resolution_clock::now();
+	// Execute
+	StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
+
+	auto stop_s = high_resolution_clock::now();
+	/* Getting number of milliseconds as a double. */
+	duration<double, std::milli> etime_s = (stop_s - start_s);
+	etime = etime_s.count();
+
+	return etime;
+}
+double decryptXTS(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
+{
+	double etime;
+	string plain;
+
+	XTS_Mode<AES>::Decryption d;
+	d.SetKeyWithIV(key, 32, iv);
+	auto start_s = high_resolution_clock::now();
+	// Execute
+
+	StringSource ss3(cipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
+
+	auto stop_s = high_resolution_clock::now();
+	/* Getting number of milliseconds as a double. */
+	duration<double, std::milli> etime_s = (stop_s - start_s);
+	etime = etime_s.count();
+
+	return etime;
+}
+
+// CCM
+double encryptCCM(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
+{
+	double etime;
+	string cipher;
+
+	CCM<AES>::Encryption e;
+	e.SetKeyWithIV(key, 32, iv, 13);
+	e.SpecifyDataLengths(0, plain.size(), 0);
+
+	// wcout << "MaxMessageLength(): " <<  CCM_Base::MaxMessageLength() << endl;
+	auto start_s = high_resolution_clock::now();
+	// Execute
+	StringSource ss1(plain, true, new AuthenticatedEncryptionFilter(e, new StringSink(cipher))); // StringSource
+
+	auto stop_s = high_resolution_clock::now();
+	/* Getting number of milliseconds as a double. */
+	duration<double, std::milli> etime_s = (stop_s - start_s);
+	etime = etime_s.count();
+
+	return etime;
+}
+double decryptCCM(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
+{
+	double etime;
+	string plain;
+
+	CCM<AES>::Decryption d;
+	d.SetKeyWithIV(key, 32, iv, 13);
+	d.SpecifyDataLengths(0, cipher.size() - 16, 0);
+
+	auto start_s = high_resolution_clock::now();
+	// Execute
+	AuthenticatedDecryptionFilter df(d, new StringSink(plain));
+	StringSource ss2(cipher, true, new Redirector(df)); // StringSource
+
+	auto stop_s = high_resolution_clock::now();
+	/* Getting number of milliseconds as a double. */
+	duration<double, std::milli> etime_s = (stop_s - start_s);
+	etime = etime_s.count();
+
+	return etime;
+}
+
+// GCM
+double encryptGCM(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
+{
+	double etime;
+	string cipher;
+	const int TAG_SIZE = 12;
+
+	GCM<AES>::Encryption e;
+	e.SetKeyWithIV(key, 32, iv, 13);
+
+	// wcout << "MaxMessageLength(): " <<  GCM_Base::MaxMessageLength() << endl;
+	auto start_s = high_resolution_clock::now();
+	// Execute
+	StringSource ss1(plain, true, new AuthenticatedEncryptionFilter(e, new StringSink(cipher), false, TAG_SIZE)); // StringSource
+
+	auto stop_s = high_resolution_clock::now();
+	/* Getting number of milliseconds as a double. */
+	duration<double, std::milli> etime_s = (stop_s - start_s);
+	etime = etime_s.count();
+
+	return etime;
+}
+double decryptGCM(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
+{
+	double etime;
+	string plain;
+	const int TAG_SIZE = 12;
+
+	GCM<AES>::Decryption d;
+	d.SetKeyWithIV(key, 32, iv, 13);
+
+	auto start_s = high_resolution_clock::now();
+	// Execute
+	AuthenticatedDecryptionFilter df(d, new StringSink(plain), 16 , TAG_SIZE);
+
+	StringSource ss2(cipher, true, new Redirector(df)); // StringSource
 
 	auto stop_s = high_resolution_clock::now();
 	/* Getting number of milliseconds as a double. */

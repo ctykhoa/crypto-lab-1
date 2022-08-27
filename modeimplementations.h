@@ -102,3 +102,27 @@ double decryptECB(string cipher, CryptoPP::byte * key);
 // CBC
 double encryptCBC(string plain, CryptoPP::byte * key, CryptoPP::byte * iv);
 double decryptCBC(string cipher, CryptoPP::byte * key, CryptoPP::byte * iv);
+
+// OFB
+double encryptOFB(string plain, CryptoPP::byte * key, CryptoPP::byte * iv);
+double decryptOFB(string cipher, CryptoPP::byte * key, CryptoPP::byte * iv);
+
+// CFB
+double encryptCFB(string plain, CryptoPP::byte * key, CryptoPP::byte * iv);
+double decryptCFB(string cipher, CryptoPP::byte * key, CryptoPP::byte * iv);
+
+// CTR
+double encryptCTR(string plain, CryptoPP::byte * key, CryptoPP::byte * ctr);
+double decryptCTR(string cipher, CryptoPP::byte * key, CryptoPP::byte * ctr);
+
+// XTS
+double encryptXTS(string plain, CryptoPP::byte * key, CryptoPP::byte * iv);
+double decryptXTS(string cipher, CryptoPP::byte * key, CryptoPP::byte * iv);
+
+// CCM
+double encryptCCM(string plain, CryptoPP::byte * key, CryptoPP::byte * iv);
+double decryptCCM(string cipher, CryptoPP::byte * key, CryptoPP::byte * iv);
+
+// GCM
+double encryptGCM(string plain, CryptoPP::byte * key, CryptoPP::byte * iv);
+double decryptGCM(string cipher, CryptoPP::byte * key, CryptoPP::byte * iv);

@@ -77,7 +77,12 @@ using CryptoPP::CBC_Mode;
 using CryptoPP::XTS_Mode;
 
 #include <cryptopp/ccm.h>
+using CryptoPP::AuthenticatedDecryptionFilter;
+using CryptoPP::AuthenticatedEncryptionFilter;
 using CryptoPP::CCM;
+using CryptoPP::Redirector;
+
+// using CCM_Base;
 
 #include <cryptopp/gcm.h>
 using CryptoPP::GCM;
@@ -352,6 +357,364 @@ int main(int argc, char *argv[])
 
 				// Execute
 				StringSource ss3(decodedCipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
+				output = plain;
+			}
+		}
+		break;
+	case 3:
+		/* OFB */
+		{
+			if (function == 1)
+			{
+				// Encrypt
+				int i = 1;
+				input = plain;
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + encryptOFB(plain, key, iv);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				OFB_Mode<AES>::Encryption e;
+				e.SetKeyWithIV(key, KEY_LENGTH, iv);
+
+				// Execute
+				StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
+				output = encodeText(cipher);
+			}
+			else
+			{
+				// Decrypt
+				int i = 1;
+				string decodedCipher;
+				input = cipher;
+				decodedCipher = decodeText(cipher);
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + decryptOFB(decodedCipher, key, iv);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				OFB_Mode<AES>::Decryption d;
+				d.SetKeyWithIV(key, KEY_LENGTH, iv);
+
+				// Execute
+				StringSource ss3(decodedCipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
+				output = plain;
+			}
+		}
+		break;
+	case 4:
+		/* CFB */
+		{
+			if (function == 1)
+			{
+				// Encrypt
+				int i = 1;
+				input = plain;
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + encryptCFB(plain, key, iv);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				CFB_Mode<AES>::Encryption e;
+				e.SetKeyWithIV(key, KEY_LENGTH, iv);
+
+				// Execute
+				StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
+				output = encodeText(cipher);
+			}
+			else
+			{
+				// Decrypt
+				int i = 1;
+				string decodedCipher;
+				input = cipher;
+				decodedCipher = decodeText(cipher);
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + decryptCFB(decodedCipher, key, iv);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				CFB_Mode<AES>::Decryption d;
+				d.SetKeyWithIV(key, KEY_LENGTH, iv);
+
+				// Execute
+				StringSource ss3(decodedCipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
+				output = plain;
+			}
+		}
+		break;
+	case 5:
+		/* CTR */
+		{
+			if (function == 1)
+			{
+				// Encrypt
+				int i = 1;
+				input = plain;
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + encryptCTR(plain, key, iv);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				CTR_Mode<AES>::Encryption e;
+				e.SetKeyWithIV(key, KEY_LENGTH, iv);
+
+				// Execute
+				StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
+				output = encodeText(cipher);
+			}
+			else
+			{
+				// Decrypt
+				int i = 1;
+				string decodedCipher;
+				input = cipher;
+				decodedCipher = decodeText(cipher);
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + decryptCTR(decodedCipher, key, iv);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				CTR_Mode<AES>::Decryption d;
+				d.SetKeyWithIV(key, KEY_LENGTH, iv);
+
+				// Execute
+				StringSource ss3(decodedCipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
+				output = plain;
+			}
+		}
+		break;
+	case 6:
+		/* XTS */
+		{
+			if (function == 1)
+			{
+				// Encrypt
+				int i = 1;
+				input = plain;
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + encryptXTS(plain, key, iv);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				XTS_Mode<AES>::Encryption e;
+				e.SetKeyWithIV(key, KEY_LENGTH, iv);
+
+				// Execute
+				StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
+				output = encodeText(cipher);
+			}
+			else
+			{
+				// Decrypt
+				int i = 1;
+				string decodedCipher;
+				input = cipher;
+				decodedCipher = decodeText(cipher);
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + decryptXTS(decodedCipher, key, iv);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				XTS_Mode<AES>::Decryption d;
+				d.SetKeyWithIV(key, KEY_LENGTH, iv);
+
+				// Execute
+				StringSource ss3(decodedCipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
+				output = plain;
+			}
+		}
+		break;
+	case 7:
+		/* CCM */
+		{
+			if (function == 1)
+			{
+				// Encrypt
+				int i = 1;
+				input = plain;
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + encryptCCM(plain, key, iv);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				CCM<AES>::Encryption e;
+				e.SetKeyWithIV(key, KEY_LENGTH, iv, 13);
+				e.SpecifyDataLengths(0, plain.size(), 0);
+
+				// Execute
+				StringSource ss1(plain, true, new AuthenticatedEncryptionFilter(e, new StringSink(cipher))); // StringSource
+				output = encodeText(cipher);
+			}
+			else
+			{
+				// Decrypt
+				int i = 1;
+				string decodedCipher;
+				input = cipher;
+				decodedCipher = decodeText(cipher);
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + decryptCCM(decodedCipher, key, iv);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				CCM<AES>::Decryption d;
+				d.SetKeyWithIV(key, KEY_LENGTH, iv, 13);
+				d.SpecifyDataLengths(0, decodedCipher.size() - 16, 0);
+				// Execute
+				AuthenticatedDecryptionFilter df(d, new StringSink(plain)); // AuthenticatedDecryptionFilter
+				StringSource ss2(decodedCipher, true, new Redirector(df));
+				output = plain;
+			}
+		}
+		break;
+	case 8:
+		/* GCM */
+		{
+			const int TAG_SIZE = 12;
+
+			if (function == 1)
+			{
+				// Encrypt
+				int i = 1;
+				input = plain;
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + encryptGCM(plain, key, iv);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				GCM<AES>::Encryption e;
+				e.SetKeyWithIV(key, KEY_LENGTH, iv, 13);
+
+				// Execute
+				StringSource ss1(plain, true, new AuthenticatedEncryptionFilter(e, new StringSink(cipher), false, TAG_SIZE));
+				output = encodeText(cipher);
+			}
+			else
+			{
+				// Decrypt
+				int i = 1;
+				string decodedCipher;
+				input = cipher;
+				decodedCipher = decodeText(cipher);
+				try
+				{
+					while (i < 10001)
+					{
+						total = total + decryptGCM(decodedCipher, key, iv);
+						i++;
+					}
+				}
+				catch (const std::exception &e)
+				{
+					std::cerr << e.what() << '\n';
+					system("pause");
+				}
+
+				GCM<AES>::Decryption d;
+				d.SetKeyWithIV(key, KEY_LENGTH, iv, 13);
+				// Execute
+				AuthenticatedDecryptionFilter df(d, new StringSink(plain), 16 , TAG_SIZE);
+				StringSource ss2(decodedCipher, true, new Redirector(df));
 				output = plain;
 			}
 		}
