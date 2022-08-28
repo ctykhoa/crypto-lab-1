@@ -3,17 +3,17 @@
         {
             "type": "cppbuild",
             "label": "C/C++: g++.exe build active file",
-            "command": "D:\\msys64\\mingw64\\bin\\g++.exe",
+            "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
-                "${fileDirname}\\ultilities.cpp",
-                "${fileDirname}\\ultilities.h",
-                "${fileDirname}\\modeimplementations.cpp",
-                "${fileDirname}\\modeimplementations.h",
+                "${fileDirname}/ultilities.cpp",
+                "${fileDirname}/ultilities.h",
+                "${fileDirname}/modeimplementations.cpp",
+                "${fileDirname}/modeimplementations.h",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe",
+                "${fileDirname}/${fileBasenameNoExtension}",
                 "--include-directory=include/",
                 "-L${workspaceFolder}/lib",
                 "-l:libcryptopp.a"
