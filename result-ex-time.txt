@@ -1,0 +1,80 @@
+1.
+Input size: 674500 bytes
+Total time for 10000 rounds: 3902.98 ms
+Execution time: 0.390298 ms
+
+--
+Input size: 1349024 bytes
+Total time for 10000 rounds: 1297.59 ms
+Execution time: 0.129759 ms
+
+
+---------
+2.
+Input size: 674500 bytes
+Total time for 10000 rounds: 7736.47 ms
+Execution time: 0.773647 ms
+
+--
+Input size: 1349024 bytes
+Total time for 10000 rounds: 1489.85 ms
+Execution time: 0.148985 ms
+
+---------
+3.
+Input size: 674500 bytes
+Total time for 10000 rounds: 8178.3 ms
+Execution time: 0.81783 ms
+--
+Input size: 1349000 bytes
+Total time for 10000 rounds: 5632.47 ms
+Execution time: 0.563247 ms
+---------
+
+4.
+Input size: 674500 bytes
+Total time for 10000 rounds: 8594.4 ms
+Execution time: 0.85944 ms
+--
+Input size: 1349000 bytes
+Total time for 10000 rounds: 2550.33 ms
+Execution time: 0.255033 ms
+
+---------
+5.
+Input size: 674500 bytes
+Total time for 10000 rounds: 4236.46 ms
+Execution time: 0.423646 ms
+--
+Input size: 1349000 bytes
+Total time for 10000 rounds: 1498.55 ms
+Execution time: 0.149855 ms
+
+--------
+6.
+Input size: 674500 bytes
+Total time for 10000 rounds: 7745.22 ms
+Execution time: 0.774522 ms
+--
+Input size: 1349000 bytes
+Total time for 10000 rounds: 4711.35 ms
+Execution time: 0.471135 ms
+
+---------
+7.
+
+
+
+
+
+
+---------
+8.
+Input size: 674500 bytes
+Total time for 10000 rounds: 5235.78 ms
+Execution time: 0.523578 ms
+--
+Input size: 1349024 bytes
+Total time for 10000 rounds: 2132.63 ms
+Execution time: 0.213263 ms
+
