@@ -1,19 +1,20 @@
+
 {
     "tasks": [
         {
             "type": "cppbuild",
             "label": "C/C++: g++.exe build active file",
-            "command": "/usr/bin/g++",
+            "command": "D:\\msys64\\mingw64\\bin\\g++.exe",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
-                "${fileDirname}/ultilities.cpp",
-                "${fileDirname}/ultilities.h",
-                "${fileDirname}/modeimplementations.cpp",
-                "${fileDirname}/modeimplementations.h",
+                "${fileDirname}\\ultilities.cpp",
+                "${fileDirname}\\ultilities.h",
+                "${fileDirname}\\modeimplementations.cpp",
+                "${fileDirname}\\modeimplementations.h",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}",
+                "${fileDirname}\\${fileBasenameNoExtension}.exe",
                 "--include-directory=include/",
                 "-L${workspaceFolder}/lib",
                 "-l:libcryptopp.a"
