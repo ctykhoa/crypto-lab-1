@@ -111,7 +111,7 @@ string encodeText(std::string decodedText)
 string readTextFromScreen()
 {
 	wstring wText;
-	fflush(stdin);
+	wcin.ignore();
 	std::getline(wcin, wText);
 	return ws2s(wText);
 }

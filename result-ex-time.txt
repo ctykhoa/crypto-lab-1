@@ -1,80 +1,82 @@
 1.
 Input size: 674500 bytes
-Total time for 10000 rounds: 3902.98 ms
-Execution time: 0.390298 ms
+Total time for 10000 rounds: 4238.15 ms
+Execution time: 0.423815 ms
 
 --
 Input size: 1349024 bytes
-Total time for 10000 rounds: 1297.59 ms
-Execution time: 0.129759 ms
-
+Total time for 10000 rounds: 1294.01 ms
+Execution time: 0.129401 ms
 
 ---------
 2.
 Input size: 674500 bytes
-Total time for 10000 rounds: 7736.47 ms
-Execution time: 0.773647 ms
+Total time for 10000 rounds: 8461.77 ms
+Execution time: 0.846177 ms
 
 --
 Input size: 1349024 bytes
-Total time for 10000 rounds: 1489.85 ms
-Execution time: 0.148985 ms
+Total time for 10000 rounds: 1448.57 ms
+Execution time: 0.144857 ms
 
 ---------
 3.
 Input size: 674500 bytes
-Total time for 10000 rounds: 8178.3 ms
-Execution time: 0.81783 ms
+Total time for 10000 rounds: 8482.23 ms
+Execution time: 0.848223 ms
+
 --
 Input size: 1349000 bytes
-Total time for 10000 rounds: 5632.47 ms
-Execution time: 0.563247 ms
+Total time for 10000 rounds: 5211.53 ms
+Execution time: 0.521153 ms
 ---------
 
 4.
 Input size: 674500 bytes
-Total time for 10000 rounds: 8594.4 ms
-Execution time: 0.85944 ms
+Total time for 10000 rounds: 8656.08 ms
+Execution time: 0.865608 ms
 --
 Input size: 1349000 bytes
-Total time for 10000 rounds: 2550.33 ms
-Execution time: 0.255033 ms
+Total time for 10000 rounds: 2360.79 ms
+Execution time: 0.236079 ms
 
 ---------
 5.
 Input size: 674500 bytes
-Total time for 10000 rounds: 4236.46 ms
-Execution time: 0.423646 ms
+Total time for 10000 rounds: 4302.5 ms
+Execution time: 0.43025 ms
 --
 Input size: 1349000 bytes
-Total time for 10000 rounds: 1498.55 ms
-Execution time: 0.149855 ms
+Total time for 10000 rounds: 1389.15 ms
+Execution time: 0.138915 ms
 
 --------
 6.
 Input size: 674500 bytes
-Total time for 10000 rounds: 7745.22 ms
-Execution time: 0.774522 ms
+Total time for 10000 rounds: 7537.98 ms
+Execution time: 0.753798 ms
 --
 Input size: 1349000 bytes
-Total time for 10000 rounds: 4711.35 ms
-Execution time: 0.471135 ms
+Total time for 10000 rounds: 4427.85 ms
+Execution time: 0.442785 ms
 
 ---------
 7.
-
-
-
-
-
+Input size: 674500 bytes
+Total time for 10000 rounds: 9507.13 ms
+Execution time: 0.950713 ms
+--
+Input size: 1349032 bytes
+Total time for 10000 rounds: 6070.41 ms
+Execution time: 0.607041 ms
 
 ---------
 8.
 Input size: 674500 bytes
-Total time for 10000 rounds: 5235.78 ms
-Execution time: 0.523578 ms
+Total time for 10000 rounds: 3973.56 ms
+Execution time: 0.397356 ms
 --
 Input size: 1349024 bytes
-Total time for 10000 rounds: 2132.63 ms
-Execution time: 0.213263 ms
+Total time for 10000 rounds: 2002.15 ms
+Execution time: 0.200215 ms
 

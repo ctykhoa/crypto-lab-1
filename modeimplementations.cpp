@@ -716,7 +716,7 @@ double decryptXTS(string cipher, string inKey, string inIV, int inputSource, int
 
 	if (isOutput == 1)
 	{
-		showOutput(outputDest, output);
+		showOutput(outputDest, plain);
 	}
 
 	return etime;
@@ -939,7 +939,7 @@ double decryptGCM(string cipher, string inKey, string inIV, int inputSource, int
 
 	if (isOutput == 1)
 	{
-		showOutput(outputDest, output);
+		showOutput(outputDest, plain);
 	}
 
 	return etime;

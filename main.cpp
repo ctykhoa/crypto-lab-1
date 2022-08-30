@@ -113,9 +113,14 @@ int main(int argc, char *argv[])
 #else
 #endif
 
-	const int KEY_LENGTH = 32;
-	const int IV_LENGTH = 16;
-
+	int rounds = 0;
+	wcout << "Number of round: " << endl;
+	wcin >> rounds;
+	if (rounds < 0)
+	{
+		wcout << "Invalid!" << endl;
+		return 0;
+	}
 	int mode, function, inputSource, plainTextSource = 1, cipherTextSource = 1, outputDest;
 	string inKey = "", iniv, plain, cipher, output, input;
 	wstring wplain, wcipher;
@@ -125,8 +130,29 @@ int main(int argc, char *argv[])
 	wcin >> mode;
 	wcout << "1.Encryption or 2.Decryption:\n";
 	wcin >> function;
-	wcout << "Secret key,  Initialization Vector IV, and nonce,..\nCase 1: Secret key and IV are randomly chosen for each run time using random generator using CryptoPP::AutoSeededRandomPool;\nCase 2: Input Secret Key and IV from screen\nCase 3: Input Secret Key and IV from file (using file name)\n";
-	wcin >> inputSource;
+	if (function == 1)
+	{
+		wcout << "Secret key,  Initialization Vector IV, and nonce,..\nCase 1: Secret key and IV are randomly chosen for each run time using random generator using CryptoPP::AutoSeededRandomPool;\nCase 2: Input Secret Key and IV from screen\nCase 3: Input Secret Key and IV from file (using file name)\n";
+		wcin >> inputSource;
+	}
+	else
+	{
+		wcout << "Secret key,  Initialization Vector IV, and nonce,..\nCase 1: Input Secret Key and IV from screen\nCase 2: Input Secret Key and IV from file (using file name)\n";
+		wcin >> inputSource;
+		if (inputSource == 1)
+		{
+			inputSource = 2; // from screen
+		}
+		else if (inputSource == 2)
+		{
+			inputSource = 3; // from file
+		}
+		else
+		{
+			inputSource = 4; // to throw error
+		}
+	}
+
 	if (function == 1)
 	{
 		wcout << "Plain text: \nCase 1: Input from screen;\nCase 2: From files (using file name);\n";
@@ -204,6 +230,7 @@ int main(int argc, char *argv[])
 			case 1:
 				/* screen */
 				{
+
 					wcout << "Input cipher text:\n";
 					cipher = readTextFromScreen();
 				}
@@ -244,7 +271,7 @@ int main(int argc, char *argv[])
 				input = plain;
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + encryptECB(plain, inKey, inputSource, 0, outputDest);
 						i++;
@@ -255,7 +282,7 @@ int main(int argc, char *argv[])
 					std::cerr << e.what() << '\n';
 					system("pause");
 				}
-				
+
 				encryptECB(plain, inKey, inputSource, 1, outputDest);
 			}
 			else
@@ -267,7 +294,7 @@ int main(int argc, char *argv[])
 				decodedCipher = decodeText(cipher);
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + decryptECB(decodedCipher, inKey, inputSource, 0, outputDest);
 						i++;
@@ -293,7 +320,7 @@ int main(int argc, char *argv[])
 				input = plain;
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + encryptCBC(plain, inKey, iniv, inputSource, 0, outputDest);
 						i++;
@@ -316,7 +343,7 @@ int main(int argc, char *argv[])
 				decodedCipher = decodeText(cipher);
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + decryptCBC(decodedCipher, inKey, iniv, inputSource, 0, outputDest);
 						i++;
@@ -342,7 +369,7 @@ int main(int argc, char *argv[])
 				input = plain;
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + encryptOFB(plain, inKey, iniv, inputSource, 0, outputDest);
 						i++;
@@ -365,7 +392,7 @@ int main(int argc, char *argv[])
 				decodedCipher = decodeText(cipher);
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + decryptOFB(decodedCipher, inKey, iniv, inputSource, 0, outputDest);
 						i++;
@@ -376,7 +403,7 @@ int main(int argc, char *argv[])
 					std::cerr << e.what() << '\n';
 					system("pause");
 				}
-				
+
 				decryptOFB(decodedCipher, inKey, iniv, inputSource, 1, outputDest);
 			}
 		}
@@ -391,7 +418,7 @@ int main(int argc, char *argv[])
 				input = plain;
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + encryptCFB(plain, inKey, iniv, inputSource, 0, outputDest);
 						i++;
@@ -414,7 +441,7 @@ int main(int argc, char *argv[])
 				decodedCipher = decodeText(cipher);
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + decryptCFB(decodedCipher, inKey, iniv, inputSource, 0, outputDest);
 						i++;
@@ -440,7 +467,7 @@ int main(int argc, char *argv[])
 				input = plain;
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + encryptCTR(plain, inKey, iniv, inputSource, 0, outputDest);
 						i++;
@@ -463,7 +490,7 @@ int main(int argc, char *argv[])
 				decodedCipher = decodeText(cipher);
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + decryptCTR(decodedCipher, inKey, iniv, inputSource, 0, outputDest);
 						i++;
@@ -489,7 +516,7 @@ int main(int argc, char *argv[])
 				input = plain;
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + encryptXTS(plain, inKey, iniv, inputSource, 0, outputDest);
 						i++;
@@ -512,7 +539,7 @@ int main(int argc, char *argv[])
 				decodedCipher = decodeText(cipher);
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + decryptXTS(decodedCipher, inKey, iniv, inputSource, 0, outputDest);
 						i++;
@@ -538,7 +565,7 @@ int main(int argc, char *argv[])
 				input = plain;
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + encryptCCM(plain, inKey, iniv, inputSource, 0, outputDest);
 						i++;
@@ -561,7 +588,7 @@ int main(int argc, char *argv[])
 				decodedCipher = decodeText(cipher);
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + decryptCCM(decodedCipher, inKey, iniv, inputSource, 0, outputDest);
 						i++;
@@ -589,7 +616,7 @@ int main(int argc, char *argv[])
 				input = plain;
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + encryptGCM(plain, inKey, iniv, inputSource, 0, outputDest);
 						i++;
@@ -612,7 +639,7 @@ int main(int argc, char *argv[])
 				decodedCipher = decodeText(cipher);
 				try
 				{
-					while (i < 10001)
+					while (i <= rounds)
 					{
 						total = total + decryptGCM(decodedCipher, inKey, iniv, inputSource, 0, outputDest);
 						i++;
@@ -633,7 +660,7 @@ int main(int argc, char *argv[])
 	}
 
 	wcout << "Input size: " << input.size() << " bytes" << endl;
-	wcout << "Total time for 10000 rounds: " << total << " ms" << endl;
-	wcout << "Execution time: " << total / 10000 << " ms" << endl;
+	wcout << "Total time for " << rounds << " rounds: " << total << " ms" << endl;
+	wcout << "Execution time: " << total / rounds << " ms" << endl;
 	system("pause");
 }
