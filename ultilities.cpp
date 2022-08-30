@@ -30,9 +30,9 @@ using std::ofstream;
 #endif
 
 #include <chrono>
-using std::chrono::high_resolution_clock;
-using std::chrono::duration_cast;
 using std::chrono::duration;
+using std::chrono::duration_cast;
+using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
 
 // external header library
@@ -108,42 +108,49 @@ string encodeText(std::string decodedText)
 	return encoded;
 }
 
-string readTextFromScreen() {
+string readTextFromScreen()
+{
 	wstring wText;
 	fflush(stdin);
 	std::getline(wcin, wText);
 	return ws2s(wText);
 }
 
-string readTextFromFile(char* fileName) {
+string readTextFromFile(char *fileName)
+{
 	string text;
 	CryptoPP::FileSource file(fileName, true, new StringSink(text));
 	return text;
 }
 
-void displayToScreen(string text) {
+void displayToScreen(string text)
+{
 	wcout << s2ws(text) << endl;
 }
 
-void writeToFile(string text, char* fileName) {
+void writeToFile(string text, char *fileName)
+{
 	CryptoPP::StringSource(text, true, new FileSink(fileName));
 }
 
-CryptoPP::byte* generateRandomByteBlock() {
-	CryptoPP::byte * randomBlock = (unsigned char*)malloc(32);
-
-	// random number generation
-	AutoSeededRandomPool prng;
-
-	// key generation
-	prng.GenerateBlock(randomBlock, sizeof(randomBlock));
-	return randomBlock;
+void showOutput(int dest, string output)
+{
+	// Print hash output in hex form
+	switch (dest)
+	{
+	case 1:
+		/* screen */
+		{
+			displayToScreen(output);
+		}
+		break;
+	case 2:
+		/* file */
+		{
+			writeToFile(output, (char *)"output.txt");
+		}
+		break;
+	default:
+		break;
+	}
 }
-
-CryptoPP::byte* getByteBlockFromText(string text) {
-	static CryptoPP::byte block[32];	
-	CryptoPP::StringSource(text, true, new CryptoPP::ArraySink(block, sizeof(block) - 1));
-	
-	return block;
-}
-

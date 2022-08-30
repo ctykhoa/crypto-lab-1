@@ -29,9 +29,9 @@ using std::ofstream;
 #endif
 
 #include <chrono>
-using std::chrono::high_resolution_clock;
-using std::chrono::duration_cast;
 using std::chrono::duration;
+using std::chrono::duration_cast;
+using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
 
 // external header library
@@ -96,33 +96,33 @@ using CryptoPP::AuthenticatedEncryptionFilter;
 using CryptoPP::SecByteBlock;
 
 // ECB
-double encryptECB(string plain, CryptoPP::byte * key);
-double decryptECB(string cipher, CryptoPP::byte * key);
+double encryptECB(string plain, string inKey, int inputSource, int isOutput, int outputDest);
+double decryptECB(string cipher, string inKey, int inputSource, int isOutput, int outputDest);
 
 // CBC
-double encryptCBC(string plain, CryptoPP::byte * key, CryptoPP::byte * iv);
-double decryptCBC(string cipher, CryptoPP::byte * key, CryptoPP::byte * iv);
+double encryptCBC(string plain, string inKey, string inIV, int inputSource, int isOutput, int outputDest);
+double decryptCBC(string cipher, string inKey, string inIV, int inputSource, int isOutput, int outputDest);
 
 // OFB
-double encryptOFB(string plain, CryptoPP::byte * key, CryptoPP::byte * iv);
-double decryptOFB(string cipher, CryptoPP::byte * key, CryptoPP::byte * iv);
+double encryptOFB(string plain, string inKey, string inIV, int inputSource, int isOutput, int outputDest);
+double decryptOFB(string cipher, string inKey, string inIV, int inputSource, int isOutput, int outputDest);
 
 // CFB
-double encryptCFB(string plain, CryptoPP::byte * key, CryptoPP::byte * iv);
-double decryptCFB(string cipher, CryptoPP::byte * key, CryptoPP::byte * iv);
+double encryptCFB(string plain, string inKey, string inIV, int inputSource, int isOutput, int outputDest);
+double decryptCFB(string cipher, string inKey, string inIV, int inputSource, int isOutput, int outputDest);
 
 // CTR
-double encryptCTR(string plain, CryptoPP::byte * key, CryptoPP::byte * ctr);
-double decryptCTR(string cipher, CryptoPP::byte * key, CryptoPP::byte * ctr);
+double encryptCTR(string plain, string inKey, string inIV, int inputSource, int isOutput, int outputDest);
+double decryptCTR(string cipher, string inKey, string inIV, int inputSource, int isOutput, int outputDest);
 
 // XTS
-double encryptXTS(string plain, CryptoPP::byte * key, CryptoPP::byte * iv);
-double decryptXTS(string cipher, CryptoPP::byte * key, CryptoPP::byte * iv);
+double encryptXTS(string plain, string inKey, string inIV, int inputSource, int isOutput, int outputDest);
+double decryptXTS(string cipher, string inKey, string inIV, int inputSource, int isOutput, int outputDest);
 
 // CCM
-double encryptCCM(string plain, CryptoPP::byte * key, CryptoPP::byte * iv);
-double decryptCCM(string cipher, CryptoPP::byte * key, CryptoPP::byte * iv);
+double encryptCCM(string plain, string inKey, string inIV, int inputSource, int isOutput, int outputDest);
+double decryptCCM(string cipher, string inKey, string inIV, int inputSource, int isOutput, int outputDest);
 
 // GCM
-double encryptGCM(string plain, CryptoPP::byte * key, CryptoPP::byte * iv);
-double decryptGCM(string cipher, CryptoPP::byte * key, CryptoPP::byte * iv);
+double encryptGCM(string plain, string inKey, string inIV, int inputSource, int isOutput, int outputDest);
+double decryptGCM(string cipher, string inKey, string inIV, int inputSource, int isOutput, int outputDest);

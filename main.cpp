@@ -119,8 +119,6 @@ int main(int argc, char *argv[])
 	int mode, function, inputSource, plainTextSource = 1, cipherTextSource = 1, outputDest;
 	string inKey = "", iniv, plain, cipher, output, input;
 	wstring wplain, wcipher;
-	CryptoPP::byte *key;
-	CryptoPP::byte *iv;
 	double total = 0;
 
 	wcout << "Support modes: 1.ECB, 2.CBC, 3.OFB, 4.CFB, 5.CTR, 6.XTS, 7.CCM, 8.GCM\n";
@@ -146,21 +144,16 @@ int main(int argc, char *argv[])
 	{
 	case 1:
 		/* Random */
-		{
-			key = generateRandomByteBlock();
-		}
 		break;
 	case 2:
 		/* screen */
 		{
 			wcout << "Input key:\n";
 			inKey = readTextFromScreen();
-			key = getByteBlockFromText(inKey);
 			if (mode != 1 /*ECB*/)
 			{
 				wcout << "Input IV:\n";
 				iniv = readTextFromScreen();
-				iv = getByteBlockFromText(iniv);
 			}
 		}
 		break;
@@ -168,11 +161,9 @@ int main(int argc, char *argv[])
 		/* file */
 		{
 			inKey = readTextFromFile((char *)"AES_key.key");
-			key = getByteBlockFromText(inKey);
 			if (mode != 1 /*ECB*/)
 			{
 				iniv = readTextFromFile((char *)"AES_IV.key");
-				iv = getByteBlockFromText(iniv);
 			}
 		}
 		break;
@@ -255,7 +246,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + encryptECB(plain, key);
+						total = total + encryptECB(plain, inKey, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -264,13 +255,8 @@ int main(int argc, char *argv[])
 					std::cerr << e.what() << '\n';
 					system("pause");
 				}
-
-				ECB_Mode<AES>::Encryption e;
-				e.SetKey(key, KEY_LENGTH);
-
-				// Execute
-				StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
-				output = encodeText(cipher);
+				
+				encryptECB(plain, inKey, inputSource, 1, outputDest);
 			}
 			else
 			{
@@ -283,7 +269,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + decryptECB(decodedCipher, key);
+						total = total + decryptECB(decodedCipher, inKey, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -293,12 +279,7 @@ int main(int argc, char *argv[])
 					system("pause");
 				}
 
-				ECB_Mode<AES>::Decryption d;
-				d.SetKey(key, KEY_LENGTH);
-
-				// Execute
-				StringSource ss3(decodedCipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
-				output = plain;
+				decryptECB(decodedCipher, inKey, inputSource, 1, outputDest);
 			}
 		}
 		break;
@@ -314,7 +295,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + encryptCBC(plain, key, iv);
+						total = total + encryptCBC(plain, inKey, iniv, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -324,12 +305,7 @@ int main(int argc, char *argv[])
 					system("pause");
 				}
 
-				CBC_Mode<AES>::Encryption e;
-				e.SetKeyWithIV(key, KEY_LENGTH, iv);
-
-				// Execute
-				StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
-				output = encodeText(cipher);
+				encryptCBC(plain, inKey, iniv, inputSource, 1, outputDest);
 			}
 			else
 			{
@@ -342,7 +318,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + decryptCBC(decodedCipher, key, iv);
+						total = total + decryptCBC(decodedCipher, inKey, iniv, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -352,12 +328,7 @@ int main(int argc, char *argv[])
 					system("pause");
 				}
 
-				CBC_Mode<AES>::Decryption d;
-				d.SetKeyWithIV(key, KEY_LENGTH, iv);
-
-				// Execute
-				StringSource ss3(decodedCipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
-				output = plain;
+				decryptCBC(decodedCipher, inKey, iniv, inputSource, 1, outputDest);
 			}
 		}
 		break;
@@ -373,7 +344,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + encryptOFB(plain, key, iv);
+						total = total + encryptOFB(plain, inKey, iniv, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -383,12 +354,7 @@ int main(int argc, char *argv[])
 					system("pause");
 				}
 
-				OFB_Mode<AES>::Encryption e;
-				e.SetKeyWithIV(key, KEY_LENGTH, iv);
-
-				// Execute
-				StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
-				output = encodeText(cipher);
+				encryptOFB(plain, inKey, iniv, inputSource, 1, outputDest);
 			}
 			else
 			{
@@ -401,7 +367,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + decryptOFB(decodedCipher, key, iv);
+						total = total + decryptOFB(decodedCipher, inKey, iniv, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -410,13 +376,8 @@ int main(int argc, char *argv[])
 					std::cerr << e.what() << '\n';
 					system("pause");
 				}
-
-				OFB_Mode<AES>::Decryption d;
-				d.SetKeyWithIV(key, KEY_LENGTH, iv);
-
-				// Execute
-				StringSource ss3(decodedCipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
-				output = plain;
+				
+				decryptOFB(decodedCipher, inKey, iniv, inputSource, 1, outputDest);
 			}
 		}
 		break;
@@ -432,7 +393,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + encryptCFB(plain, key, iv);
+						total = total + encryptCFB(plain, inKey, iniv, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -442,12 +403,7 @@ int main(int argc, char *argv[])
 					system("pause");
 				}
 
-				CFB_Mode<AES>::Encryption e;
-				e.SetKeyWithIV(key, KEY_LENGTH, iv);
-
-				// Execute
-				StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
-				output = encodeText(cipher);
+				encryptCFB(plain, inKey, iniv, inputSource, 1, outputDest);
 			}
 			else
 			{
@@ -460,7 +416,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + decryptCFB(decodedCipher, key, iv);
+						total = total + decryptCFB(decodedCipher, inKey, iniv, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -470,12 +426,7 @@ int main(int argc, char *argv[])
 					system("pause");
 				}
 
-				CFB_Mode<AES>::Decryption d;
-				d.SetKeyWithIV(key, KEY_LENGTH, iv);
-
-				// Execute
-				StringSource ss3(decodedCipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
-				output = plain;
+				decryptCFB(decodedCipher, inKey, iniv, inputSource, 1, outputDest);
 			}
 		}
 		break;
@@ -491,7 +442,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + encryptCTR(plain, key, iv);
+						total = total + encryptCTR(plain, inKey, iniv, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -501,12 +452,7 @@ int main(int argc, char *argv[])
 					system("pause");
 				}
 
-				CTR_Mode<AES>::Encryption e;
-				e.SetKeyWithIV(key, KEY_LENGTH, iv);
-
-				// Execute
-				StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
-				output = encodeText(cipher);
+				encryptCTR(plain, inKey, iniv, inputSource, 1, outputDest);
 			}
 			else
 			{
@@ -519,7 +465,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + decryptCTR(decodedCipher, key, iv);
+						total = total + decryptCTR(decodedCipher, inKey, iniv, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -529,12 +475,7 @@ int main(int argc, char *argv[])
 					system("pause");
 				}
 
-				CTR_Mode<AES>::Decryption d;
-				d.SetKeyWithIV(key, KEY_LENGTH, iv);
-
-				// Execute
-				StringSource ss3(decodedCipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
-				output = plain;
+				decryptCTR(decodedCipher, inKey, iniv, inputSource, 1, outputDest);
 			}
 		}
 		break;
@@ -550,7 +491,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + encryptXTS(plain, key, iv);
+						total = total + encryptXTS(plain, inKey, iniv, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -560,12 +501,7 @@ int main(int argc, char *argv[])
 					system("pause");
 				}
 
-				XTS_Mode<AES>::Encryption e;
-				e.SetKeyWithIV(key, KEY_LENGTH, iv);
-
-				// Execute
-				StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
-				output = encodeText(cipher);
+				encryptXTS(plain, inKey, iniv, inputSource, 1, outputDest);
 			}
 			else
 			{
@@ -578,7 +514,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + decryptXTS(decodedCipher, key, iv);
+						total = total + decryptXTS(decodedCipher, inKey, iniv, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -588,12 +524,7 @@ int main(int argc, char *argv[])
 					system("pause");
 				}
 
-				XTS_Mode<AES>::Decryption d;
-				d.SetKeyWithIV(key, KEY_LENGTH, iv);
-
-				// Execute
-				StringSource ss3(decodedCipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
-				output = plain;
+				decryptXTS(decodedCipher, inKey, iniv, inputSource, 1, outputDest);
 			}
 		}
 		break;
@@ -609,7 +540,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + encryptCCM(plain, key, iv);
+						total = total + encryptCCM(plain, inKey, iniv, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -619,13 +550,7 @@ int main(int argc, char *argv[])
 					system("pause");
 				}
 
-				CCM<AES>::Encryption e;
-				e.SetKeyWithIV(key, KEY_LENGTH, iv, 13);
-				e.SpecifyDataLengths(0, plain.size(), 0);
-
-				// Execute
-				StringSource ss1(plain, true, new AuthenticatedEncryptionFilter(e, new StringSink(cipher))); // StringSource
-				output = encodeText(cipher);
+				encryptCCM(plain, inKey, iniv, inputSource, 1, outputDest);
 			}
 			else
 			{
@@ -638,7 +563,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + decryptCCM(decodedCipher, key, iv);
+						total = total + decryptCCM(decodedCipher, inKey, iniv, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -648,13 +573,7 @@ int main(int argc, char *argv[])
 					system("pause");
 				}
 
-				CCM<AES>::Decryption d;
-				d.SetKeyWithIV(key, KEY_LENGTH, iv, 13);
-				d.SpecifyDataLengths(0, decodedCipher.size() - 16, 0);
-				// Execute
-				AuthenticatedDecryptionFilter df(d, new StringSink(plain)); // AuthenticatedDecryptionFilter
-				StringSource ss2(decodedCipher, true, new Redirector(df));
-				output = plain;
+				decryptCCM(decodedCipher, inKey, iniv, inputSource, 1, outputDest);
 			}
 		}
 		break;
@@ -672,7 +591,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + encryptGCM(plain, key, iv);
+						total = total + encryptGCM(plain, inKey, iniv, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -682,12 +601,7 @@ int main(int argc, char *argv[])
 					system("pause");
 				}
 
-				GCM<AES>::Encryption e;
-				e.SetKeyWithIV(key, KEY_LENGTH, iv, 13);
-
-				// Execute
-				StringSource ss1(plain, true, new AuthenticatedEncryptionFilter(e, new StringSink(cipher), false, TAG_SIZE));
-				output = encodeText(cipher);
+				encryptGCM(plain, inKey, iniv, inputSource, 1, outputDest);
 			}
 			else
 			{
@@ -700,7 +614,7 @@ int main(int argc, char *argv[])
 				{
 					while (i < 10001)
 					{
-						total = total + decryptGCM(decodedCipher, key, iv);
+						total = total + decryptGCM(decodedCipher, inKey, iniv, inputSource, 0, outputDest);
 						i++;
 					}
 				}
@@ -710,12 +624,7 @@ int main(int argc, char *argv[])
 					system("pause");
 				}
 
-				GCM<AES>::Decryption d;
-				d.SetKeyWithIV(key, KEY_LENGTH, iv, 13);
-				// Execute
-				AuthenticatedDecryptionFilter df(d, new StringSink(plain), 16 , TAG_SIZE);
-				StringSource ss2(decodedCipher, true, new Redirector(df));
-				output = plain;
+				decryptGCM(decodedCipher, inKey, iniv, inputSource, 1, outputDest);
 			}
 		}
 		break;
@@ -723,24 +632,6 @@ int main(int argc, char *argv[])
 		break;
 	}
 
-	// Print hash output in hex form
-	switch (outputDest)
-	{
-	case 1:
-		/* screen */
-		{
-			displayToScreen(output);
-		}
-		break;
-	case 2:
-		/* file */
-		{
-			writeToFile(output, (char *)"output.txt");
-		}
-		break;
-	default:
-		break;
-	}
 	wcout << "Input size: " << input.size() << " bytes" << endl;
 	wcout << "Total time for 10000 rounds: " << total << " ms" << endl;
 	wcout << "Execution time: " << total / 10000 << " ms" << endl;

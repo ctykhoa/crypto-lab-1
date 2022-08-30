@@ -21,5 +21,4 @@ string readTextFromFile(char* fileName);
 void displayToScreen(string text);
 void writeToFile(string text, char* fileName);
 
-CryptoPP::byte* generateRandomByteBlock();
-CryptoPP::byte* getByteBlockFromText(string text);
+void showOutput(int dest, string output);

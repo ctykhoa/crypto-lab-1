@@ -93,15 +93,40 @@ using CryptoPP::GCM;
 
 using CryptoPP::CCM_Base;
 
-double encryptECB(string plain, CryptoPP::byte *key)
+double encryptECB(string plain, string inKey, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string cipher;
+	string cipher, output;
+	CryptoPP::byte key[32];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	ECB_Mode<AES>::Encryption e;
-	e.SetKey(key, 32);
+	e.SetKey(key, sizeof(key));
 
 	auto start_s = high_resolution_clock::now();
+	cipher.clear();
 	// Execute
 	StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
 
@@ -110,38 +135,101 @@ double encryptECB(string plain, CryptoPP::byte *key)
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
 
+	output = encodeText(cipher);
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, output);
+	}
+
 	return etime;
 }
-double decryptECB(string cipher, CryptoPP::byte *key)
+double decryptECB(string cipher, string inKey, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string plain;
+	string plain, output;
+	CryptoPP::byte key[32];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	ECB_Mode<AES>::Decryption d;
-	d.SetKey(key, 32);
+	d.SetKey(key, sizeof(key));
 	auto start_s = high_resolution_clock::now();
+	plain.clear();
 	// Execute
-
 	StringSource ss3(cipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
 
 	auto stop_s = high_resolution_clock::now();
 	/* Getting number of milliseconds as a double. */
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
+
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, plain);
+	}
 
 	return etime;
 }
 
 // CBC
-double encryptCBC(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
+double encryptCBC(string plain, string inKey, string inIV, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string cipher;
+	string cipher, output;
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+			prng.GenerateBlock(iv, sizeof(iv));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+			CryptoPP::StringSource(inIV, true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	CBC_Mode<AES>::Encryption e;
-	e.SetKeyWithIV(key, 32, iv);
+	e.SetKeyWithIV(key, sizeof(key), iv);
 
 	auto start_s = high_resolution_clock::now();
+	cipher.clear();
 	// Execute
 	StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
 
@@ -150,38 +238,104 @@ double encryptCBC(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
 
+	output = encodeText(cipher);
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, output);
+	}
+
 	return etime;
 }
-double decryptCBC(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
+double decryptCBC(string cipher, string inKey, string inIV, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string plain;
+	string plain, output;
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+			prng.GenerateBlock(iv, sizeof(iv));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+			CryptoPP::StringSource(inIV, true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	CBC_Mode<AES>::Decryption d;
-	d.SetKeyWithIV(key, 32, iv);
+	d.SetKeyWithIV(key, sizeof(key), iv);
 	auto start_s = high_resolution_clock::now();
+	plain.clear();
 	// Execute
-
 	StringSource ss3(cipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
 
 	auto stop_s = high_resolution_clock::now();
 	/* Getting number of milliseconds as a double. */
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
+
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, plain);
+	}
 
 	return etime;
 }
 
 // OFB
-double encryptOFB(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
+double encryptOFB(string plain, string inKey, string inIV, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string cipher;
+	string cipher, output;
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+			prng.GenerateBlock(iv, sizeof(iv));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+			CryptoPP::StringSource(inIV, true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	OFB_Mode<AES>::Encryption e;
-	e.SetKeyWithIV(key, 32, iv);
+	e.SetKeyWithIV(key, sizeof(key), iv);
 
 	auto start_s = high_resolution_clock::now();
+	cipher.clear();
 	// Execute
 	StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
 
@@ -190,38 +344,104 @@ double encryptOFB(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
 
+	output = encodeText(cipher);
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, output);
+	}
+
 	return etime;
 }
-double decryptOFB(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
+double decryptOFB(string cipher, string inKey, string inIV, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string plain;
+	string plain, output;
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+			prng.GenerateBlock(iv, sizeof(iv));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+			CryptoPP::StringSource(inIV, true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	OFB_Mode<AES>::Decryption d;
-	d.SetKeyWithIV(key, 32, iv);
+	d.SetKeyWithIV(key, sizeof(key), iv);
 	auto start_s = high_resolution_clock::now();
+	plain.clear();
 	// Execute
-
 	StringSource ss3(cipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
 
 	auto stop_s = high_resolution_clock::now();
 	/* Getting number of milliseconds as a double. */
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
+
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, plain);
+	}
 
 	return etime;
 }
 
 // CFB
-double encryptCFB(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
+double encryptCFB(string plain, string inKey, string inIV, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string cipher;
+	string cipher, output;
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+			prng.GenerateBlock(iv, sizeof(iv));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+			CryptoPP::StringSource(inIV, true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	CFB_Mode<AES>::Encryption e;
-	e.SetKeyWithIV(key, 32, iv);
+	e.SetKeyWithIV(key, sizeof(key), iv);
 
 	auto start_s = high_resolution_clock::now();
+	cipher.clear();
 	// Execute
 	StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
 
@@ -230,38 +450,104 @@ double encryptCFB(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
 
+	output = encodeText(cipher);
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, output);
+	}
+
 	return etime;
 }
-double decryptCFB(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
+double decryptCFB(string cipher, string inKey, string inIV, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string plain;
+	string plain, output;
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+			prng.GenerateBlock(iv, sizeof(iv));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+			CryptoPP::StringSource(inIV, true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	CFB_Mode<AES>::Decryption d;
-	d.SetKeyWithIV(key, 32, iv);
+	d.SetKeyWithIV(key, sizeof(key), iv);
 	auto start_s = high_resolution_clock::now();
+	plain.clear();
 	// Execute
-
 	StringSource ss3(cipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
 
 	auto stop_s = high_resolution_clock::now();
 	/* Getting number of milliseconds as a double. */
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
+
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, plain);
+	}
 
 	return etime;
 }
 
 // CTR
-double encryptCTR(string plain, CryptoPP::byte *key, CryptoPP::byte *ctr)
+double encryptCTR(string plain, string inKey, string inIV, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string cipher;
+	string cipher, output;
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+			prng.GenerateBlock(iv, sizeof(iv));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+			CryptoPP::StringSource(inIV, true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	CTR_Mode<AES>::Encryption e;
-	e.SetKeyWithIV(key, 32, ctr);
+	e.SetKeyWithIV(key, sizeof(key), iv);
 
 	auto start_s = high_resolution_clock::now();
+	cipher.clear();
 	// Execute
 	StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
 
@@ -270,38 +556,104 @@ double encryptCTR(string plain, CryptoPP::byte *key, CryptoPP::byte *ctr)
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
 
+	output = encodeText(cipher);
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, output);
+	}
+
 	return etime;
 }
-double decryptCTR(string cipher, CryptoPP::byte *key, CryptoPP::byte *ctr)
+double decryptCTR(string cipher, string inKey, string inIV, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string plain;
+	string plain, output;
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+			prng.GenerateBlock(iv, sizeof(iv));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+			CryptoPP::StringSource(inIV, true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	CTR_Mode<AES>::Decryption d;
-	d.SetKeyWithIV(key, 32, ctr);
+	d.SetKeyWithIV(key, sizeof(key), iv);
 	auto start_s = high_resolution_clock::now();
+	plain.clear();
 	// Execute
-
 	StringSource ss3(cipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
 
 	auto stop_s = high_resolution_clock::now();
 	/* Getting number of milliseconds as a double. */
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
+
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, plain);
+	}
 
 	return etime;
 }
 
 // XTS
-double encryptXTS(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
+double encryptXTS(string plain, string inKey, string inIV, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string cipher;
+	string cipher, output;
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+			prng.GenerateBlock(iv, sizeof(iv));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+			CryptoPP::StringSource(inIV, true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	XTS_Mode<AES>::Encryption e;
-	e.SetKeyWithIV(key, 32, iv);
+	e.SetKeyWithIV(key, sizeof(key), iv);
 
 	auto start_s = high_resolution_clock::now();
+	cipher.clear();
 	// Execute
 	StringSource ss1(plain, true, new StreamTransformationFilter(e, new StringSink(cipher))); // StringSource
 
@@ -310,18 +662,51 @@ double encryptXTS(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
 
+	output = encodeText(cipher);
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, output);
+	}
+
 	return etime;
 }
-double decryptXTS(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
+double decryptXTS(string cipher, string inKey, string inIV, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string plain;
+	string plain, output;
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+			prng.GenerateBlock(iv, sizeof(iv));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+			CryptoPP::StringSource(inIV, true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	XTS_Mode<AES>::Decryption d;
-	d.SetKeyWithIV(key, 32, iv);
+	d.SetKeyWithIV(key, sizeof(key), iv);
 	auto start_s = high_resolution_clock::now();
+	plain.clear();
 	// Execute
-
 	StringSource ss3(cipher, true, new StreamTransformationFilter(d, new StringSink(plain)));
 
 	auto stop_s = high_resolution_clock::now();
@@ -329,21 +714,54 @@ double decryptXTS(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
 
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, output);
+	}
+
 	return etime;
 }
 
 // CCM
-double encryptCCM(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
+double encryptCCM(string plain, string inKey, string inIV, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string cipher;
+	string cipher, output;
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+			prng.GenerateBlock(iv, sizeof(iv));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+			CryptoPP::StringSource(inIV, true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	CCM<AES>::Encryption e;
-	e.SetKeyWithIV(key, 32, iv, 13);
+	e.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
 	e.SpecifyDataLengths(0, plain.size(), 0);
 
 	// wcout << "MaxMessageLength(): " <<  CCM_Base::MaxMessageLength() << endl;
 	auto start_s = high_resolution_clock::now();
+	cipher.clear();
 	// Execute
 	StringSource ss1(plain, true, new AuthenticatedEncryptionFilter(e, new StringSink(cipher))); // StringSource
 
@@ -352,18 +770,52 @@ double encryptCCM(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
 
+	output = encodeText(cipher);
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, output);
+	}
+
 	return etime;
 }
-double decryptCCM(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
+double decryptCCM(string cipher, string inKey, string inIV, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string plain;
+	string plain, output;
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+			prng.GenerateBlock(iv, sizeof(iv));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+			CryptoPP::StringSource(inIV, true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	CCM<AES>::Decryption d;
-	d.SetKeyWithIV(key, 32, iv, 13);
+	d.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
 	d.SpecifyDataLengths(0, cipher.size() - 16, 0);
 
 	auto start_s = high_resolution_clock::now();
+	plain.clear();
 	// Execute
 	AuthenticatedDecryptionFilter df(d, new StringSink(plain));
 	StringSource ss2(cipher, true, new Redirector(df)); // StringSource
@@ -373,21 +825,54 @@ double decryptCCM(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
 
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, plain);
+	}
+
 	return etime;
 }
 
 // GCM
-double encryptGCM(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
+double encryptGCM(string plain, string inKey, string inIV, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string cipher;
+	string cipher, output;
 	const int TAG_SIZE = 12;
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+			prng.GenerateBlock(iv, sizeof(iv));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+			CryptoPP::StringSource(inIV, true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	GCM<AES>::Encryption e;
-	e.SetKeyWithIV(key, 32, iv, 13);
+	e.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
 
 	// wcout << "MaxMessageLength(): " <<  GCM_Base::MaxMessageLength() << endl;
 	auto start_s = high_resolution_clock::now();
+	cipher.clear();
 	// Execute
 	StringSource ss1(plain, true, new AuthenticatedEncryptionFilter(e, new StringSink(cipher), false, TAG_SIZE)); // StringSource
 
@@ -396,20 +881,54 @@ double encryptGCM(string plain, CryptoPP::byte *key, CryptoPP::byte *iv)
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
 
+	output = encodeText(cipher);
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, output);
+	}
+
 	return etime;
 }
-double decryptGCM(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
+double decryptGCM(string cipher, string inKey, string inIV, int inputSource, int isOutput, int outputDest)
 {
 	double etime;
-	string plain;
+	string plain, output;
 	const int TAG_SIZE = 12;
+	CryptoPP::byte key[32];
+	CryptoPP::byte iv[12];
+
+	switch (inputSource)
+	{
+	case 1:
+		/* Random */
+		{
+			// random number generation
+			AutoSeededRandomPool prng;
+			// key generation
+			prng.GenerateBlock(key, sizeof(key));
+			prng.GenerateBlock(iv, sizeof(iv));
+		}
+		break;
+	case 2:
+		/* screen */
+	case 3:
+		/* file */
+		{
+			CryptoPP::StringSource(inKey, true, new CryptoPP::ArraySink(key, sizeof(key) - 1));
+			CryptoPP::StringSource(inIV, true, new CryptoPP::ArraySink(iv, sizeof(iv) - 1));
+		}
+		break;
+	default:
+		break;
+	}
 
 	GCM<AES>::Decryption d;
-	d.SetKeyWithIV(key, 32, iv, 13);
+	d.SetKeyWithIV(key, sizeof(key), iv, sizeof(iv));
 
 	auto start_s = high_resolution_clock::now();
+	plain.clear();
 	// Execute
-	AuthenticatedDecryptionFilter df(d, new StringSink(plain), 16 , TAG_SIZE);
+	AuthenticatedDecryptionFilter df(d, new StringSink(plain), 16, TAG_SIZE);
 
 	StringSource ss2(cipher, true, new Redirector(df)); // StringSource
 
@@ -417,6 +936,11 @@ double decryptGCM(string cipher, CryptoPP::byte *key, CryptoPP::byte *iv)
 	/* Getting number of milliseconds as a double. */
 	duration<double, std::milli> etime_s = (stop_s - start_s);
 	etime = etime_s.count();
+
+	if (isOutput == 1)
+	{
+		showOutput(outputDest, output);
+	}
 
 	return etime;
 }
